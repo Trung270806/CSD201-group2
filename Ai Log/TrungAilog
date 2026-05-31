@@ -1,0 +1,950 @@
+
+
+
+Nhận ưu đãi
+
+5224cf79-5795-47a5-b249-8458612f7cb5.png
+2acc17bb-83cd-46be-bc53-e8ec25a2e136.png
+
+
+Ảnh đã tạo: Sơ đồ thiết kế phần mềm giao dịch
+
+
+Chỉnh sửa
+
+
+880803f6-4d03-4cad-8e2e-b5ce466f53d0.png
+
+Lỗi của bạn là:
+
+StringIndexOutOfBoundsException
+String index out of range: 5
+Nguyên nhân
+Lỗi nằm ở dòng:
+
+date.substring(3,5)
+Trong code trước mình đưa.
+
+Vì sao lỗi?
+Bạn nhập:
+
+Date: 222
+Nhưng code đang kỳ vọng format:
+
+dd/MM/yyyy
+Ví dụ đúng:
+
+10/05/2026
+substring(3,5) nghĩa là gì?
+Ví dụ:
+
+10/05/2026
+Index:
+
+0 1 2 3 4
+1 0 / 0 5
+substring(3,5) sẽ lấy:
+
+05
+=> tháng
+
+Nhưng bạn nhập:
+222
+Chuỗi chỉ có:
+
+index 0 1 2
+Không có index 5.
+
+Nên Java báo:
+
+String index out of range
+Cách sửa NHANH nhất
+Khi nhập date
+Hãy nhập đúng format:
+
+dd/MM/yyyy
+Ví dụ:
+
+10/05/2026
+Ví dụ đúng
+ID: 123
+Type: Deposit
+Amount: 500
+Date: 10/05/2026
+Description: Salary
+Cách sửa CHUẨN hơn trong code
+Bạn nên validate input trước.
+
+Thay đoạn này
+int month =
+Integer.parseInt(
+    date.substring(3,5)
+);
+Thành
+if(date.length() >= 5){
+
+    int month =
+    Integer.parseInt(
+        date.substring(3,5)
+    );
+
+    report.addMonthlyData(
+        month,
+        amount
+    );
+}
+else{
+    System.out.println(
+        "Invalid date format! Use dd/MM/yyyy"
+    );
+}
+Tốt hơn nữa (recommended)
+Dùng:
+
+LocalDate
+thay vì String.
+
+Ví dụ chuẩn Java hiện đại
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+Parse date
+DateTimeFormatter formatter =
+DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+LocalDate localDate =
+LocalDate.parse(date, formatter);
+
+int month = localDate.getMonthValue();
+Vì sao cách này tốt hơn?
+Không bị:
+
+substring lỗi
+
+sai format
+
+index out of range
+
+AI Reflection bạn có thể ghi
+The initial implementation used substring() to extract the month from the date string.
+
+However, invalid user input caused StringIndexOutOfBoundsException.
+
+To improve robustness, input validation or LocalDate parsing should be used instead of manual substring extraction.
+
+lenh undo hien tai co the undo lai việc xóa dữ liệu k
+
+Hiện tại:
+
+KHÔNG
+Lệnh undo trong code hiện tại chỉ undo:
+
+transaction vừa ADD
+Vì sao?
+Trong code hiện tại:
+
+undoStack.push(t);
+chỉ được gọi khi:
+
+ADD transaction
+Khi Undo
+Code đang làm:
+
+Transaction undo = undoStack.pop();
+
+list.deleteTransaction(undo.id);
+Nghĩa là
+Undo hiện tại thực chất là:
+
+xóa transaction vừa thêm
+Nó KHÔNG lưu:
+❌ delete action
+❌ update action
+❌ previous state
+
+Ví dụ hiện tại
+Bước 1
+Add transaction:
+
+101 Deposit
+Stack:
+
+[101]
+Bước 2
+Undo
+
+→ transaction 101 bị xóa
+
+Nhưng nếu:
+Bước 1
+Delete transaction 101
+
+Bước 2
+Undo
+
+❌ Không restore lại được.
+
+Vì sao?
+Vì stack không lưu:
+
+thông tin transaction đã bị xóa
+Muốn Undo Delete thì cần gì?
+Bạn cần lưu:
+
+Action History
+không phải chỉ Transaction.
+
+Cách làm chuẩn hơn
+Ta tạo:
+
+class Action
+Ví dụ
+class Action {
+
+    String actionType;
+
+    Transaction transaction;
+
+    public Action(String actionType,
+                  Transaction transaction){
+
+        this.actionType = actionType;
+        this.transaction = transaction;
+    }
+}
+Stack mới
+Stack<Action> undoStack
+Khi ADD
+Push:
+
+new Action("ADD", transaction)
+Khi DELETE
+Push:
+
+new Action("DELETE", transaction)
+Undo logic
+Nếu action là ADD
+    → delete transaction
+
+Nếu action là DELETE
+    → restore transaction
+Pseudocode chuẩn
+UNDO()
+
+    action = undoStack.pop()
+
+    IF action.type == "ADD"
+        delete transaction
+
+    ELSE IF action.type == "DELETE"
+        restore transaction
+Đây mới là Undo thực sự
+Hệ thống hiện tại của bạn là:
+Simple Undo Add
+Hệ thống nâng cấp là:
+Action-Based Undo System
+Đây là kiểu design được điểm cao hơn rất nhiều
+Vì nó thể hiện:
+
+✅ abstraction
+✅ design pattern thinking
+✅ state management
+✅ algorithmic thinking
+
+Ví dụ flow chuẩn
+ADD 101
+ADD 102
+DELETE 101
+Stack:
+
+[ADD 101]
+[ADD 102]
+[DELETE 101]
+Undo lần 1
+restore 101
+Undo lần 2
+remove 102
+AI Reflection rất mạnh cho phần này
+The initial undo implementation only supported reversing recently added transactions.
+
+However, it could not restore deleted transactions because the system only stored transaction objects instead of action history.
+
+To improve functionality, an Action-based Undo system was designed using a stack of operations.
+
+toi muon sua lai cai undo co the undo va viec xoa 
+
+Bạn cần sửa hệ thống từ:
+
+Undo Transaction
+thành:
+
+Undo Action
+để có thể:
+
+✅ undo add
+✅ undo delete
+
+1. Tạo class Action
+Thêm class này
+class Action {
+
+    String actionType;
+    Transaction transaction;
+
+    public Action(String actionType,
+                  Transaction transaction) {
+
+        this.actionType = actionType;
+        this.transaction = transaction;
+    }
+}
+Ý nghĩa
+actionType	Ý nghĩa
+ADD	vừa thêm transaction
+DELETE	vừa xóa transaction
+2. Đổi Stack<Transaction>
+Code cũ
+Stack<Transaction> undoStack =
+    new Stack<>();
+Đổi thành
+Stack<Action> undoStack =
+    new Stack<>();
+3. Sửa phần ADD
+Code cũ
+undoStack.push(t);
+Đổi thành
+undoStack.push(
+    new Action("ADD", t)
+);
+4. Sửa deleteTransaction()
+PHẦN QUAN TRỌNG NHẤT
+Bạn phải:
+
+lưu transaction trước khi xóa
+Thay method deleteTransaction bằng cái này
+public Transaction deleteTransaction(int id) {
+
+    if(head == null) {
+        System.out.println("Empty List");
+        return null;
+    }
+
+    TransactionNode current = head;
+
+    while(current != null) {
+
+        if(current.data.id == id) {
+
+            Transaction deletedData =
+                current.data;
+
+            // delete head
+            if(current == head) {
+
+                head = head.next;
+
+                if(head != null)
+                    head.prev = null;
+            }
+
+            // delete tail
+            else if(current == tail) {
+
+                tail = tail.prev;
+
+                if(tail != null)
+                    tail.next = null;
+            }
+
+            // delete middle
+            else {
+
+                current.prev.next =
+                    current.next;
+
+                current.next.prev =
+                    current.prev;
+            }
+
+            System.out.println("Deleted!");
+
+            return deletedData;
+        }
+
+        current = current.next;
+    }
+
+    System.out.println("Transaction not found");
+
+    return null;
+}
+Vì sao phải return Transaction?
+Để:
+
+undo có thể restore lại
+5. Sửa menu DELETE
+Code cũ
+list.deleteTransaction(deleteId);
+Đổi thành
+Transaction deleted =
+    list.deleteTransaction(deleteId);
+
+if(deleted != null){
+
+    undoStack.push(
+        new Action("DELETE", deleted)
+    );
+}
+6. Sửa phần UNDO
+Xóa toàn bộ case 6 cũ
+Thay bằng
+case 6:
+
+    if(!undoStack.isEmpty()) {
+
+        Action lastAction =
+            undoStack.pop();
+
+        // undo add
+        if(lastAction.actionType
+            .equals("ADD")) {
+
+            list.deleteTransaction(
+                lastAction.transaction.id
+            );
+
+            System.out.println(
+                "Undo Add Success!"
+            );
+        }
+
+        // undo delete
+        else if(lastAction.actionType
+                .equals("DELETE")) {
+
+            list.addTransaction(
+                lastAction.transaction
+            );
+
+            System.out.println(
+                "Undo Delete Success!"
+            );
+        }
+    }
+    else {
+
+        System.out.println(
+            "Nothing to Undo"
+        );
+    }
+
+    break;
+7. Kết quả sau khi sửa
+Ví dụ 1 — Undo Add
+Add 101
+List:
+
+101
+Undo
+List:
+
+(empty)
+Ví dụ 2 — Undo Delete
+List ban đầu
+101 → 102
+Delete 101
+102
+Undo
+101 → 102
+8. Đây là kiểu Undo gì?
+Action-Based Undo System
+Đây là design tốt hơn nhiều vì
+✅ lưu operation history
+✅ hỗ trợ nhiều loại undo
+✅ scalable
+✅ giống application thực tế
+
+9. AI Reflection cực đẹp
+The initial undo implementation only supported reversing recently added transactions.
+
+To improve functionality, the system was redesigned using an Action-based Undo mechanism.
+
+Instead of storing only transactions, the stack now stores action types and related transaction data.
+
+This design allows the system to undo both ADD and DELETE operations while improving scalability for future features such as UPDATE undo.
+
+dự án này có cần chia ra customer và admin k
+
+Nếu đây là project CSD201 (Data Structures & Algorithms) thì câu trả lời là:
+
+KHÔNG bắt buộc
+và thực ra nếu mới làm lần đầu thì không nên thêm Customer/Admin quá sớm.
+
+Mục tiêu thật sự của đề này
+Nhìn vào RQ của đề:
+
+Doubly Linked List
+
+BST
+
+Hash Table
+
+Search
+
+Range Query
+
+Complexity Analysis
+
+=> Giảng viên đang đánh giá:
+
+Data Structure
+Algorithm
+AI Reflection
+Research Analysis
+chứ không phải:
+
+Web System
+Authentication
+Role Management
+Version 1 (Đủ điểm và đúng trọng tâm)
+Bạn chỉ cần:
+
+Actor
+User
+Chức năng
+Add Transaction
+Delete Transaction
+Search Transaction
+Update Transaction
+Undo
+Monthly Report
+Class
+Transaction
+TransactionNode
+DoublyLinkedList
+ReportManager
+UndoStack
+Là đủ để chứng minh:
+
+Linked List
+
+Array
+
+Stack
+
+BST
+
+Hash Table
+
+Khi nào nên có Admin và Customer?
+Nếu giảng viên yêu cầu:
+
+Real Banking System
+hoặc
+
+Object-Oriented Design
+thì nên thêm.
+
+Version 2 (Điểm cộng)
+Customer
+Đại diện người sở hữu giao dịch.
+
+class Customer {
+    int customerId;
+    String name;
+}
+Transaction
+class Transaction {
+    int id;
+    Customer customer;
+    double amount;
+}
+Admin
+Admin có thể:
+
+View All Transactions
+Delete Transaction
+Generate Reports
+Customer
+Customer có thể:
+
+View Own Transactions
+Search Own Transactions
+Use Case nếu có role
+Customer
+   |
+   +-- View Transaction
+   +-- Search Transaction
+
+Admin
+   |
+   +-- Add Transaction
+   +-- Delete Transaction
+   +-- Generate Report
+   +-- Undo Action
+Nhưng có một vấn đề
+Nếu thêm Customer/Admin thì bạn phải thêm:
+
+User
+Admin
+Customer
+Authentication
+Authorization
+Trong khi:
+
+không giúp tăng điểm Data Structure nhiều
+Mình khuyên cho CSD201
+Nên làm
+Customer
+    |
+    | has many
+    v
+Transaction
+Không cần làm
+Login
+Password
+Admin Dashboard
+Role Permission
+JWT
+Cấu trúc đẹp nhất cho báo cáo
+Customer
+    |
+    +----< Transaction
+
+Transaction
+    |
+    +---- Stored in Doubly Linked List
+
+BST
+    |
+    +---- Search by Date
+
+Hash Table
+    |
+    +---- Search by Transaction ID
+
+Array
+    |
+    +---- Monthly Reports
+
+Stack
+    |
+    +---- Undo Actions
+Đây là phiên bản vừa có yếu tố ngân hàng thực tế, vừa giữ trọng tâm Data Structure & Algorithm, thường phù hợp nhất cho project CSD201.
+
+
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+
+
+Chỉnh sửa
+
+
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+
+Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
+
+
+Chỉnh sửa
+
+
+Nếu xét theo nghiệp vụ ngân hàng thực tế thì:
+
+Transaction thường KHÔNG được update
+vì giao dịch đã phát sinh là dữ liệu lịch sử.
+
+Ví dụ:
+
+Transaction #101
+Deposit 500$
+01/06/2026
+sau khi lưu thì ngân hàng không cho sửa thành:
+
+Deposit 5000$
+vì sẽ làm sai lịch sử giao dịch.
+
+Với project CSD201 của bạn
+Mình nghĩ có 2 lựa chọn:
+
+Lựa chọn 1 (Khuyên dùng)
+BỎ Update Transaction
+
+Use Case còn:
+
+Add Transaction
+Display Transaction History
+Search Transaction
+Delete Transaction
+Undo Action
+Sort Transactions
+Generate Monthly Report
+Ưu điểm:
+
+✅ Thực tế hơn
+
+✅ Ít code hơn
+
+✅ Tập trung vào Data Structure
+
+✅ Dễ giải thích khi thuyết trình
+
+Lựa chọn 2
+Giữ Update Transaction
+
+Nhưng đổi ý nghĩa thành:
+
+Correct Transaction Information
+Ví dụ:
+
+sửa description
+
+sửa category
+
+sửa note
+
+Không sửa:
+
+Transaction ID
+
+Amount
+
+Date
+
+Nếu giảng viên hỏi
+"Tại sao em không có Update Transaction?"
+
+Bạn có thể trả lời:
+
+In a real banking system, completed transactions should be immutable to preserve data integrity and auditability. Therefore, the system supports Add, Delete, Search, and Undo operations instead of modifying historical transaction records.
+
+Đây là câu trả lời khá mạnh về mặt thiết kế.
+
+Theo những gì bạn đã xây dựng
+Hiện bạn có:
+
+Singly Linked List
+
+Array
+
+Undo Add/Delete
+
+Search
+
+Report
+
+Mình sẽ đề xuất Use Case cuối cùng như sau:
+
+User
+ │
+ ├── Add Transaction
+ ├── Display Transaction History
+ ├── Search Transaction
+ │     ├── Search by ID
+ │     └── Search by Type
+ ├── Delete Transaction
+ ├── Undo Action
+ │     ├── Undo Add
+ │     └── Undo Delete
+ ├── Sort Transactions
+ └── Generate Monthly Report
+       └── View Monthly Statistics
+Đây là phiên bản gọn, hợp lý, đúng với hệ thống Singly Linked List + Array và thường dễ đạt điểm hơn một Use Case có thêm Update nhưng không thật sự cần thiết.
+
+
+121c3990-e3b1-4e45-aec8-6b3986ebe68e.png
+như thế này đã hợp lí r đúng k
+
+Nhìn tổng thể thì:
+
+80-90% là hợp lý rồi
+và phù hợp với hướng:
+
+Singly Linked List + Array
+mà bạn đang làm.
+
+Tuy nhiên nếu nộp UML Use Case Diagram thì mình sẽ chỉnh vài điểm để đúng chuẩn hơn.
+
+1. Quan hệ User → Use Case
+Hiện tại bạn đang vẽ mũi tên:
+
+User ---->
+Use Case
+Trong UML chuẩn nên dùng:
+
+đường thẳng không mũi tên
+Ví dụ:
+
+User -------- Add Transaction
+không cần arrow.
+
+2. Search By ID
+Hiện tại:
+
+Search Transaction ---> Search By ID
+Ý tưởng đúng.
+
+Nhưng UML chuẩn nên ghi:
+
+<<include>>
+Ví dụ:
+
+Search Transaction
+       |
+   <<include>>
+       |
+Search By ID
+3. Undo Add / Undo Delete
+Cái này bạn làm đúng ý tưởng.
+
+Nhưng nên ghi:
+
+<<include>>
+thay vì chỉ nối đường thường.
+
+Ví dụ:
+
+Undo Action
+      |
+  <<include>>
+      |
+Undo Add Transaction
+
+Undo Action
+      |
+  <<include>>
+      |
+Undo Delete Transaction
+4. Generate Monthly Report
+Nếu bạn dùng Array để lưu:
+
+monthlyTotal[12]
+transactionCount[12]
+thì nên thêm:
+
+View Monthly Statistics
+Ví dụ:
+
+Generate Monthly Report
+          |
+      <<include>>
+          |
+View Monthly Statistics
+Điều này giúp giảng viên thấy:
+
+Array thực sự có vai trò
+5. Thiếu Sort Transaction
+Trong code và báo cáo bạn có nói:
+
+Merge Sort
+thì nên thêm:
+
+Sort Transactions
+Sơ đồ sẽ thành:
+
+User
+
+├── Add Transaction
+├── Display Transaction History
+├── Search Transaction
+│      └── Search By ID
+├── Delete Transaction
+├── Undo Action
+│      ├── Undo Add Transaction
+│      └── Undo Delete Transaction
+├── Sort Transactions
+└── Generate Monthly Report
+       └── View Monthly Statistics
+6. Có cần Search By Type không?
+Nếu code hiện tại chỉ có:
+
+searchTransaction(int id)
+thì:
+
+KHÔNG cần
+Chỉ để:
+
+Search By ID
+là đủ.
+
+Đánh giá nếu nộp hiện tại
+Tiêu chí	Đánh giá
+Đúng Use Case	✅
+Đúng phạm vi CSD201	✅
+Bám Singly Linked List	✅
+Không quá phức tạp	✅
+UML chuẩn	⚠️ cần thêm <<include>>
+Thể hiện Array	⚠️ nên thêm View Monthly Statistics
+Thể hiện Sorting	⚠️ nên thêm Sort Transaction
+Nếu chỉnh 3 điểm cuối (<<include>>, Sort Transactions, View Monthly Statistics) thì sơ đồ này hoàn toàn đủ đẹp để đưa vào báo cáo RBL và thuyết trình.
+
+
+k làm uml
+
+Nếu bạn không làm UML chuẩn mà chỉ làm sơ đồ chức năng để trình bày ý tưởng hệ thống thì sơ đồ hiện tại của bạn hoàn toàn ổn.
+
+Thực tế với nhiều nhóm CSD201, giảng viên quan tâm:
+
+- Có phân tích cấu trúc dữ liệu không?
+- Có giải thích được chức năng không?
+- Có pseudocode không?
+- Có AI Reflection không?
+- Có chứng minh vì sao chọn Singly Linked List và Array không?
+hơn là việc UML có đúng 100% ký hiệu hay không.
+
+Với hệ thống của bạn:
+
+User
+ ├── Add Transaction
+ ├── Display Transaction History
+ ├── Search Transaction
+ │      └── Search By ID
+ ├── Delete Transaction
+ ├── Undo Action
+ │      ├── Undo Add Transaction
+ │      └── Undo Delete Transaction
+ └── Generate Monthly Report
+là logic và dễ hiểu.
+
+Mình chỉ đề xuất thêm 1 chức năng nữa:
+
+Sort Transactions
+vì:
+
+dễ chứng minh thuật toán Merge Sort
+
+giúp phần Process/Algorithm mạnh hơn
+
+dễ viết pseudocode
+
+dễ lấy điểm phần thuật toán
+
+Sơ đồ cuối cùng có thể là:
+
+User
+ ├── Add Transaction
+ ├── Display Transaction History
+ ├── Search Transaction
+ │      └── Search By ID
+ ├── Delete Transaction
+ ├── Undo Action
+ │      ├── Undo Add Transaction
+ │      └── Undo Delete Transaction
+ ├── Sort Transactions
+ └── Generate Monthly Report
+Nếu đây là bản mình đi nộp cho project Bank Transaction History System dùng Singly Linked List + Array, mình sẽ tự tin để nguyên sơ đồ đó và chuyển thời gian sang làm:
+
+Class Diagram
+
+Pseudocode
+
+AI Reflection
+
+Complexity Analysis
+
+vì những phần đó thường ảnh hưởng điểm nhiều hơn việc chỉnh sơ đồ use case thêm vài ký hiệu UML.
+
+
