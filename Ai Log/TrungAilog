@@ -474,164 +474,6 @@ This design allows the system to undo both ADD and DELETE operations while impro
 
 dự án này có cần chia ra customer và admin k
 
-Nếu đây là project CSD201 (Data Structures & Algorithms) thì câu trả lời là:
-
-KHÔNG bắt buộc
-và thực ra nếu mới làm lần đầu thì không nên thêm Customer/Admin quá sớm.
-
-Mục tiêu thật sự của đề này
-Nhìn vào RQ của đề:
-
-Doubly Linked List
-
-BST
-
-Hash Table
-
-Search
-
-Range Query
-
-Complexity Analysis
-
-=> Giảng viên đang đánh giá:
-
-Data Structure
-Algorithm
-AI Reflection
-Research Analysis
-chứ không phải:
-
-Web System
-Authentication
-Role Management
-Version 1 (Đủ điểm và đúng trọng tâm)
-Bạn chỉ cần:
-
-Actor
-User
-Chức năng
-Add Transaction
-Delete Transaction
-Search Transaction
-Update Transaction
-Undo
-Monthly Report
-Class
-Transaction
-TransactionNode
-DoublyLinkedList
-ReportManager
-UndoStack
-Là đủ để chứng minh:
-
-Linked List
-
-Array
-
-Stack
-
-BST
-
-Hash Table
-
-Khi nào nên có Admin và Customer?
-Nếu giảng viên yêu cầu:
-
-Real Banking System
-hoặc
-
-Object-Oriented Design
-thì nên thêm.
-
-Version 2 (Điểm cộng)
-Customer
-Đại diện người sở hữu giao dịch.
-
-class Customer {
-    int customerId;
-    String name;
-}
-Transaction
-class Transaction {
-    int id;
-    Customer customer;
-    double amount;
-}
-Admin
-Admin có thể:
-
-View All Transactions
-Delete Transaction
-Generate Reports
-Customer
-Customer có thể:
-
-View Own Transactions
-Search Own Transactions
-Use Case nếu có role
-Customer
-   |
-   +-- View Transaction
-   +-- Search Transaction
-
-Admin
-   |
-   +-- Add Transaction
-   +-- Delete Transaction
-   +-- Generate Report
-   +-- Undo Action
-Nhưng có một vấn đề
-Nếu thêm Customer/Admin thì bạn phải thêm:
-
-User
-Admin
-Customer
-Authentication
-Authorization
-Trong khi:
-
-không giúp tăng điểm Data Structure nhiều
-Mình khuyên cho CSD201
-Nên làm
-Customer
-    |
-    | has many
-    v
-Transaction
-Không cần làm
-Login
-Password
-Admin Dashboard
-Role Permission
-JWT
-Cấu trúc đẹp nhất cho báo cáo
-Customer
-    |
-    +----< Transaction
-
-Transaction
-    |
-    +---- Stored in Doubly Linked List
-
-BST
-    |
-    +---- Search by Date
-
-Hash Table
-    |
-    +---- Search by Transaction ID
-
-Array
-    |
-    +---- Monthly Reports
-
-Stack
-    |
-    +---- Undo Actions
-Đây là phiên bản vừa có yếu tố ngân hàng thực tế, vừa giữ trọng tâm Data Structure & Algorithm, thường phù hợp nhất cho project CSD201.
-
-
 Ảnh đã tạo: Sơ đồ sử dụng hệ thống giao dịch ngân hàng
 
 
@@ -758,132 +600,6 @@ User
 121c3990-e3b1-4e45-aec8-6b3986ebe68e.png
 như thế này đã hợp lí r đúng k
 
-Nhìn tổng thể thì:
-
-80-90% là hợp lý rồi
-và phù hợp với hướng:
-
-Singly Linked List + Array
-mà bạn đang làm.
-
-Tuy nhiên nếu nộp UML Use Case Diagram thì mình sẽ chỉnh vài điểm để đúng chuẩn hơn.
-
-1. Quan hệ User → Use Case
-Hiện tại bạn đang vẽ mũi tên:
-
-User ---->
-Use Case
-Trong UML chuẩn nên dùng:
-
-đường thẳng không mũi tên
-Ví dụ:
-
-User -------- Add Transaction
-không cần arrow.
-
-2. Search By ID
-Hiện tại:
-
-Search Transaction ---> Search By ID
-Ý tưởng đúng.
-
-Nhưng UML chuẩn nên ghi:
-
-<<include>>
-Ví dụ:
-
-Search Transaction
-       |
-   <<include>>
-       |
-Search By ID
-3. Undo Add / Undo Delete
-Cái này bạn làm đúng ý tưởng.
-
-Nhưng nên ghi:
-
-<<include>>
-thay vì chỉ nối đường thường.
-
-Ví dụ:
-
-Undo Action
-      |
-  <<include>>
-      |
-Undo Add Transaction
-
-Undo Action
-      |
-  <<include>>
-      |
-Undo Delete Transaction
-4. Generate Monthly Report
-Nếu bạn dùng Array để lưu:
-
-monthlyTotal[12]
-transactionCount[12]
-thì nên thêm:
-
-View Monthly Statistics
-Ví dụ:
-
-Generate Monthly Report
-          |
-      <<include>>
-          |
-View Monthly Statistics
-Điều này giúp giảng viên thấy:
-
-Array thực sự có vai trò
-5. Thiếu Sort Transaction
-Trong code và báo cáo bạn có nói:
-
-Merge Sort
-thì nên thêm:
-
-Sort Transactions
-Sơ đồ sẽ thành:
-
-User
-
-├── Add Transaction
-├── Display Transaction History
-├── Search Transaction
-│      └── Search By ID
-├── Delete Transaction
-├── Undo Action
-│      ├── Undo Add Transaction
-│      └── Undo Delete Transaction
-├── Sort Transactions
-└── Generate Monthly Report
-       └── View Monthly Statistics
-6. Có cần Search By Type không?
-Nếu code hiện tại chỉ có:
-
-searchTransaction(int id)
-thì:
-
-KHÔNG cần
-Chỉ để:
-
-Search By ID
-là đủ.
-
-Đánh giá nếu nộp hiện tại
-Tiêu chí	Đánh giá
-Đúng Use Case	✅
-Đúng phạm vi CSD201	✅
-Bám Singly Linked List	✅
-Không quá phức tạp	✅
-UML chuẩn	⚠️ cần thêm <<include>>
-Thể hiện Array	⚠️ nên thêm View Monthly Statistics
-Thể hiện Sorting	⚠️ nên thêm Sort Transaction
-Nếu chỉnh 3 điểm cuối (<<include>>, Sort Transactions, View Monthly Statistics) thì sơ đồ này hoàn toàn đủ đẹp để đưa vào báo cáo RBL và thuyết trình.
-
-
-k làm uml
-
 Nếu bạn không làm UML chuẩn mà chỉ làm sơ đồ chức năng để trình bày ý tưởng hệ thống thì sơ đồ hiện tại của bạn hoàn toàn ổn.
 
 Thực tế với nhiều nhóm CSD201, giảng viên quan tâm:
@@ -946,5 +662,1234 @@ AI Reflection
 Complexity Analysis
 
 vì những phần đó thường ảnh hưởng điểm nhiều hơn việc chỉnh sơ đồ use case thêm vài ký hiệu UML.
+
+
+tạo cho tôi 1 đoạn code chạy được và phần ra thành các class cụ thể tôi đang sử dụng netbin 17 với jdk 1.8
+
+Được, nhưng trước khi viết code hoàn chỉnh, mình cần chốt lại cấu trúc mà bạn đang làm để code không bị lệch yêu cầu.
+
+Từ toàn bộ cuộc trao đổi, mình hiểu hệ thống của bạn là:
+
+Data Structures
+Singly Linked List → lưu Transaction History
+
+Array → lưu Monthly Report
+
+Stack → Undo Add/Delete
+
+Chức năng
+Add Transaction
+
+Display Transaction History
+
+Search Transaction By ID
+
+Delete Transaction
+
+Undo Add
+
+Undo Delete
+
+Generate Monthly Report
+
+Không có
+Database
+
+GUI Swing
+
+BST
+
+Hash Table
+
+Admin/Customer
+
+Update Transaction
+
+Cấu trúc class đề xuất
+src
+│
+├── model
+│   ├── Transaction.java
+│   └── TransactionNode.java
+│
+├── linkedlist
+│   └── TransactionLinkedList.java
+│
+├── report
+│   └── ReportManager.java
+│
+├── undo
+│   ├── Action.java
+│   └── UndoManager.java
+│
+└── Main.java
+Trước khi mình viết full code:
+Bạn muốn chương trình chạy theo kiểu nào?
+
+Option 1 — Console Menu
+Ví dụ:
+
+===== BANK TRANSACTION SYSTEM =====
+
+1. Add Transaction
+2. Display History
+3. Search Transaction
+4. Delete Transaction
+5. Undo
+6. Monthly Report
+7. Exit
+
+Choose:
+Option 2 — Dữ liệu mẫu hardcode
+Ví dụ:
+
+list.add(...)
+list.add(...)
+list.display()
+rồi chạy tự động.
+
+Mình khuyên Option 1 (Console Menu) vì:
+
+đúng phong cách CSD201
+
+dễ demo cho giảng viên
+
+thể hiện đầy đủ Singly Linked List + Array + Undo
+
+có thể copy thẳng vào NetBeans 17 chạy luôn
+
+Chỉ cần bạn xác nhận:
+
+"Viết bản Console Menu"
+
+thì mình sẽ tạo đầy đủ:
+
+6 file class
+
+code Java 8 tương thích JDK 1.8
+
+không lỗi compile trên NetBeans 17
+
+kèm Class Diagram tương ứng với code.
+
+
+1
+
+Tuyệt. Với yêu cầu hiện tại:
+
+NetBeans 17
+
+JDK 1.8
+
+Singly Linked List
+
+Array
+
+Undo Add/Delete
+
+Console Menu
+
+Bank Transaction History System
+
+mình đề xuất tách thành các class sau:
+
+src
+│
+├── Transaction.java
+├── TransactionNode.java
+├── TransactionLinkedList.java
+├── Action.java
+├── ReportManager.java
+└── Main.java
+1. Transaction.java
+public class Transaction {
+
+    private int id;
+    private String type;
+    private double amount;
+    private int month;
+    private String description;
+
+    public Transaction(int id, String type,
+            double amount, int month,
+            String description) {
+
+        this.id = id;
+        this.type = type;
+        this.amount = amount;
+        this.month = month;
+        this.description = description;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void display() {
+        System.out.println(
+                "ID: " + id
+                + " | Type: " + type
+                + " | Amount: " + amount
+                + " | Month: " + month
+                + " | Description: " + description
+        );
+    }
+}
+2. TransactionNode.java
+public class TransactionNode {
+
+    Transaction data;
+    TransactionNode next;
+
+    public TransactionNode(Transaction data) {
+        this.data = data;
+        this.next = null;
+    }
+}
+3. Action.java
+Dùng cho Undo.
+
+public class Action {
+
+    String actionType;
+    Transaction transaction;
+
+    public Action(String actionType,
+            Transaction transaction) {
+
+        this.actionType = actionType;
+        this.transaction = transaction;
+    }
+}
+4. ReportManager.java
+Array được dùng ở đây.
+
+public class ReportManager {
+
+    private double[] monthlyTotal =
+            new double[12];
+
+    public void addAmount(
+            int month,
+            double amount) {
+
+        monthlyTotal[month - 1] += amount;
+    }
+
+    public void displayReport() {
+
+        System.out.println("\n===== MONTHLY REPORT =====");
+
+        for (int i = 0; i < 12; i++) {
+
+            System.out.println(
+                    "Month "
+                    + (i + 1)
+                    + ": "
+                    + monthlyTotal[i]);
+        }
+    }
+}
+5. TransactionLinkedList.java
+public class TransactionLinkedList {
+
+    private TransactionNode head;
+
+    public void add(Transaction t) {
+
+        TransactionNode newNode =
+                new TransactionNode(t);
+
+        if (head == null) {
+
+            head = newNode;
+            return;
+        }
+
+        TransactionNode temp = head;
+
+        while (temp.next != null) {
+            temp = temp.next;
+        }
+
+        temp.next = newNode;
+    }
+
+    public void display() {
+
+        if (head == null) {
+
+            System.out.println("No transaction.");
+            return;
+        }
+
+        TransactionNode temp = head;
+
+        while (temp != null) {
+
+            temp.data.display();
+            temp = temp.next;
+        }
+    }
+
+    public Transaction searchById(int id) {
+
+        TransactionNode temp = head;
+
+        while (temp != null) {
+
+            if (temp.data.getId() == id) {
+                return temp.data;
+            }
+
+            temp = temp.next;
+        }
+
+        return null;
+    }
+
+    public Transaction delete(int id) {
+
+        if (head == null) {
+            return null;
+        }
+
+        if (head.data.getId() == id) {
+
+            Transaction deleted =
+                    head.data;
+
+            head = head.next;
+
+            return deleted;
+        }
+
+        TransactionNode prev = head;
+        TransactionNode curr = head.next;
+
+        while (curr != null) {
+
+            if (curr.data.getId() == id) {
+
+                Transaction deleted =
+                        curr.data;
+
+                prev.next = curr.next;
+
+                return deleted;
+            }
+
+            prev = curr;
+            curr = curr.next;
+        }
+
+        return null;
+    }
+}
+6. Main.java
+import java.util.Scanner;
+import java.util.Stack;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        TransactionLinkedList list =
+                new TransactionLinkedList();
+
+        ReportManager report =
+                new ReportManager();
+
+        Stack<Action> undoStack =
+                new Stack<Action>();
+
+        while (true) {
+
+            System.out.println("\n===== BANK TRANSACTION SYSTEM =====");
+
+            System.out.println("1. Add Transaction");
+            System.out.println("2. Display History");
+            System.out.println("3. Search By ID");
+            System.out.println("4. Delete Transaction");
+            System.out.println("5. Undo");
+            System.out.println("6. Monthly Report");
+            System.out.println("7. Exit");
+
+            System.out.print("Choose: ");
+
+            int choice = sc.nextInt();
+
+            switch (choice) {
+
+                case 1:
+
+                    System.out.print("ID: ");
+                    int id = sc.nextInt();
+
+                    sc.nextLine();
+
+                    System.out.print("Type: ");
+                    String type = sc.nextLine();
+
+                    System.out.print("Amount: ");
+                    double amount = sc.nextDouble();
+
+                    System.out.print("Month (1-12): ");
+                    int month = sc.nextInt();
+
+                    sc.nextLine();
+
+                    System.out.print("Description: ");
+                    String des = sc.nextLine();
+
+                    Transaction t =
+                            new Transaction(
+                                    id,
+                                    type,
+                                    amount,
+                                    month,
+                                    des);
+
+                    list.add(t);
+
+                    report.addAmount(
+                            month,
+                            amount);
+
+                    undoStack.push(
+                            new Action("ADD", t));
+
+                    System.out.println(
+                            "Added successfully!");
+
+                    break;
+
+                case 2:
+
+                    list.display();
+                    break;
+
+                case 3:
+
+                    System.out.print(
+                            "Enter ID: ");
+
+                    int searchId =
+                            sc.nextInt();
+
+                    Transaction found =
+                            list.searchById(
+                                    searchId);
+
+                    if (found != null) {
+
+                        found.display();
+                    } else {
+
+                        System.out.println(
+                                "Not Found");
+                    }
+
+                    break;
+
+                case 4:
+
+                    System.out.print(
+                            "Delete ID: ");
+
+                    int deleteId =
+                            sc.nextInt();
+
+                    Transaction deleted =
+                            list.delete(
+                                    deleteId);
+
+                    if (deleted != null) {
+
+                        undoStack.push(
+                                new Action(
+                                        "DELETE",
+                                        deleted));
+
+                        System.out.println(
+                                "Deleted!");
+                    } else {
+
+                        System.out.println(
+                                "Not Found");
+                    }
+
+                    break;
+
+                case 5:
+
+                    if (undoStack.isEmpty()) {
+
+                        System.out.println(
+                                "Nothing to undo");
+
+                        break;
+                    }
+
+                    Action action =
+                            undoStack.pop();
+
+                    if (action.actionType
+                            .equals("ADD")) {
+
+                        list.delete(
+                                action.transaction.getId());
+
+                        System.out.println(
+                                "Undo Add Success");
+                    } else {
+
+                        list.add(
+                                action.transaction);
+
+                        System.out.println(
+                                "Undo Delete Success");
+                    }
+
+                    break;
+
+                case 6:
+
+                    report.displayReport();
+                    break;
+
+                case 7:
+
+                    System.exit(0);
+            }
+        }
+    }
+}
+Data Structures đã dùng
+Structure	Chức năng
+Singly Linked List	Lưu Transaction History
+Array double[12]	Monthly Report
+Stack<Action>	Undo Add/Delete
+Use Cases tương ứng
+Add Transaction
+
+Display Transaction History
+
+Search Transaction By ID
+
+Delete Transaction
+
+Undo Add Transaction
+
+Undo Delete Transaction
+
+Generate Monthly Report
+
+Đây là phiên bản khá phù hợp cho project CSD201 vì thể hiện rõ decomposition, abstraction, thuật toán duyệt danh sách liên kết và việc sử dụng nhiều cấu trúc dữ liệu khác nhau.
+
+
+tên của project là BankTransaction hãy ghi lại toàn bộ code theo tên mẫu này
+
+Nếu project của bạn tên là:
+
+BankTransaction
+thì trong NetBeans nên tạo cấu trúc như sau:
+
+BankTransaction
+│
+├── src
+│    ├── banktransaction
+│    │     ├── Transaction.java
+│    │     ├── TransactionNode.java
+│    │     ├── TransactionLinkedList.java
+│    │     ├── Action.java
+│    │     ├── ReportManager.java
+│    │     └── BankTransaction.java
+Transaction.java
+package banktransaction;
+
+public class Transaction {
+
+    private int id;
+    private String type;
+    private double amount;
+    private int month;
+    private String description;
+
+    public Transaction(int id, String type,
+            double amount, int month,
+            String description) {
+
+        this.id = id;
+        this.type = type;
+        this.amount = amount;
+        this.month = month;
+        this.description = description;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void display() {
+
+        System.out.println(
+                "ID: " + id
+                + " | Type: " + type
+                + " | Amount: " + amount
+                + " | Month: " + month
+                + " | Description: " + description
+        );
+    }
+}
+TransactionNode.java
+package banktransaction;
+
+public class TransactionNode {
+
+    Transaction data;
+    TransactionNode next;
+
+    public TransactionNode(Transaction data) {
+        this.data = data;
+        this.next = null;
+    }
+}
+Action.java
+package banktransaction;
+
+public class Action {
+
+    String actionType;
+    Transaction transaction;
+
+    public Action(String actionType,
+            Transaction transaction) {
+
+        this.actionType = actionType;
+        this.transaction = transaction;
+    }
+}
+ReportManager.java
+package banktransaction;
+
+public class ReportManager {
+
+    private double[] monthlyTotal =
+            new double[12];
+
+    public void addAmount(
+            int month,
+            double amount) {
+
+        monthlyTotal[month - 1] += amount;
+    }
+
+    public void displayReport() {
+
+        System.out.println("\n===== MONTHLY REPORT =====");
+
+        for (int i = 0; i < 12; i++) {
+
+            System.out.println(
+                    "Month "
+                    + (i + 1)
+                    + ": "
+                    + monthlyTotal[i]);
+        }
+    }
+}
+TransactionLinkedList.java
+package banktransaction;
+
+public class TransactionLinkedList {
+
+    private TransactionNode head;
+
+    public void add(Transaction t) {
+
+        TransactionNode newNode =
+                new TransactionNode(t);
+
+        if (head == null) {
+
+            head = newNode;
+            return;
+        }
+
+        TransactionNode temp = head;
+
+        while (temp.next != null) {
+            temp = temp.next;
+        }
+
+        temp.next = newNode;
+    }
+
+    public void display() {
+
+        if (head == null) {
+
+            System.out.println("No transaction found.");
+            return;
+        }
+
+        TransactionNode temp = head;
+
+        while (temp != null) {
+
+            temp.data.display();
+            temp = temp.next;
+        }
+    }
+
+    public Transaction searchById(int id) {
+
+        TransactionNode temp = head;
+
+        while (temp != null) {
+
+            if (temp.data.getId() == id) {
+                return temp.data;
+            }
+
+            temp = temp.next;
+        }
+
+        return null;
+    }
+
+    public Transaction delete(int id) {
+
+        if (head == null) {
+            return null;
+        }
+
+        if (head.data.getId() == id) {
+
+            Transaction deleted =
+                    head.data;
+
+            head = head.next;
+
+            return deleted;
+        }
+
+        TransactionNode prev = head;
+        TransactionNode curr = head.next;
+
+        while (curr != null) {
+
+            if (curr.data.getId() == id) {
+
+                Transaction deleted =
+                        curr.data;
+
+                prev.next = curr.next;
+
+                return deleted;
+            }
+
+            prev = curr;
+            curr = curr.next;
+        }
+
+        return null;
+    }
+}
+BankTransaction.java (Main Class)
+package banktransaction;
+
+import java.util.Scanner;
+import java.util.Stack;
+
+public class BankTransaction {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        TransactionLinkedList list =
+                new TransactionLinkedList();
+
+        ReportManager report =
+                new ReportManager();
+
+        Stack<Action> undoStack =
+                new Stack<Action>();
+
+        while (true) {
+
+            System.out.println("\n==============================");
+            System.out.println(" BANK TRANSACTION SYSTEM");
+            System.out.println("==============================");
+
+            System.out.println("1. Add Transaction");
+            System.out.println("2. Display History");
+            System.out.println("3. Search Transaction By ID");
+            System.out.println("4. Delete Transaction");
+            System.out.println("5. Undo Action");
+            System.out.println("6. Generate Monthly Report");
+            System.out.println("7. Exit");
+
+            System.out.print("Choose: ");
+
+            int choice = sc.nextInt();
+
+            switch (choice) {
+
+                case 1:
+
+                    System.out.print("Enter ID: ");
+                    int id = sc.nextInt();
+
+                    sc.nextLine();
+
+                    System.out.print("Enter Type: ");
+                    String type = sc.nextLine();
+
+                    System.out.print("Enter Amount: ");
+                    double amount = sc.nextDouble();
+
+                    System.out.print("Enter Month (1-12): ");
+                    int month = sc.nextInt();
+
+                    sc.nextLine();
+
+                    System.out.print("Enter Description: ");
+                    String description = sc.nextLine();
+
+                    Transaction t =
+                            new Transaction(
+                                    id,
+                                    type,
+                                    amount,
+                                    month,
+                                    description);
+
+                    list.add(t);
+
+                    report.addAmount(
+                            month,
+                            amount);
+
+                    undoStack.push(
+                            new Action("ADD", t));
+
+                    System.out.println(
+                            "Transaction Added Successfully!");
+
+                    break;
+
+                case 2:
+
+                    System.out.println(
+                            "\n===== TRANSACTION HISTORY =====");
+
+                    list.display();
+
+                    break;
+
+                case 3:
+
+                    System.out.print(
+                            "Enter Transaction ID: ");
+
+                    int searchId =
+                            sc.nextInt();
+
+                    Transaction found =
+                            list.searchById(
+                                    searchId);
+
+                    if (found != null) {
+
+                        System.out.println(
+                                "\nTransaction Found:");
+
+                        found.display();
+                    } else {
+
+                        System.out.println(
+                                "Transaction Not Found.");
+                    }
+
+                    break;
+
+                case 4:
+
+                    System.out.print(
+                            "Enter ID to Delete: ");
+
+                    int deleteId =
+                            sc.nextInt();
+
+                    Transaction deleted =
+                            list.delete(deleteId);
+
+                    if (deleted != null) {
+
+                        undoStack.push(
+                                new Action(
+                                        "DELETE",
+                                        deleted));
+
+                        System.out.println(
+                                "Transaction Deleted.");
+                    } else {
+
+                        System.out.println(
+                                "Transaction Not Found.");
+                    }
+
+                    break;
+
+                case 5:
+
+                    if (undoStack.isEmpty()) {
+
+                        System.out.println(
+                                "Nothing to Undo.");
+
+                        break;
+                    }
+
+                    Action action =
+                            undoStack.pop();
+
+                    if (action.actionType
+                            .equals("ADD")) {
+
+                        list.delete(
+                                action.transaction.getId());
+
+                        System.out.println(
+                                "Undo Add Transaction Success.");
+                    } else {
+
+                        list.add(
+                                action.transaction);
+
+                        System.out.println(
+                                "Undo Delete Transaction Success.");
+                    }
+
+                    break;
+
+                case 6:
+
+                    report.displayReport();
+
+                    break;
+
+                case 7:
+
+                    System.out.println(
+                            "Thank you for using the system.");
+
+                    System.exit(0);
+
+                    break;
+
+                default:
+
+                    System.out.println(
+                            "Invalid Choice!");
+            }
+        }
+    }
+}
+Các cấu trúc dữ liệu đang sử dụng
+Data Structure	Vai trò
+Singly Linked List	Lưu lịch sử giao dịch
+Array (double[12])	Báo cáo theo tháng
+Stack<Action>	Undo Add/Delete
+Chức năng hiện có
+Add Transaction
+
+Display Transaction History
+
+Search Transaction By ID
+
+Delete Transaction
+
+Undo Add Transaction
+
+Undo Delete Transaction
+
+Generate Monthly Report
+
+Exit System
+
+Phiên bản này tương thích với JDK 1.8 và chạy trực tiếp trên NetBeans 17.
+
+
+tôi phải ghi j vào trong BankTransaction
+
+Nếu bạn tạo project tên:
+
+BankTransaction
+thì file:
+
+BankTransaction.java
+chính là file chứa hàm:
+
+public static void main(String[] args)
+Bạn phải ghi toàn bộ đoạn này vào BankTransaction.java
+package banktransaction;
+
+import java.util.Scanner;
+import java.util.Stack;
+
+public class BankTransaction {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        TransactionLinkedList list =
+                new TransactionLinkedList();
+
+        ReportManager report =
+                new ReportManager();
+
+        Stack<Action> undoStack =
+                new Stack<Action>();
+
+        while (true) {
+
+            System.out.println("\n==============================");
+            System.out.println(" BANK TRANSACTION SYSTEM");
+            System.out.println("==============================");
+
+            System.out.println("1. Add Transaction");
+            System.out.println("2. Display History");
+            System.out.println("3. Search Transaction By ID");
+            System.out.println("4. Delete Transaction");
+            System.out.println("5. Undo Action");
+            System.out.println("6. Generate Monthly Report");
+            System.out.println("7. Exit");
+
+            System.out.print("Choose: ");
+
+            int choice = sc.nextInt();
+
+            switch (choice) {
+
+                case 1:
+
+                    System.out.print("Enter ID: ");
+                    int id = sc.nextInt();
+
+                    sc.nextLine();
+
+                    System.out.print("Enter Type: ");
+                    String type = sc.nextLine();
+
+                    System.out.print("Enter Amount: ");
+                    double amount = sc.nextDouble();
+
+                    System.out.print("Enter Month (1-12): ");
+                    int month = sc.nextInt();
+
+                    sc.nextLine();
+
+                    System.out.print("Enter Description: ");
+                    String description = sc.nextLine();
+
+                    Transaction t =
+                            new Transaction(
+                                    id,
+                                    type,
+                                    amount,
+                                    month,
+                                    description);
+
+                    list.add(t);
+
+                    report.addAmount(
+                            month,
+                            amount);
+
+                    undoStack.push(
+                            new Action("ADD", t));
+
+                    System.out.println(
+                            "Transaction Added Successfully!");
+
+                    break;
+
+                case 2:
+
+                    System.out.println(
+                            "\n===== TRANSACTION HISTORY =====");
+
+                    list.display();
+
+                    break;
+
+                case 3:
+
+                    System.out.print(
+                            "Enter Transaction ID: ");
+
+                    int searchId =
+                            sc.nextInt();
+
+                    Transaction found =
+                            list.searchById(
+                                    searchId);
+
+                    if (found != null) {
+
+                        System.out.println(
+                                "\nTransaction Found:");
+
+                        found.display();
+                    } else {
+
+                        System.out.println(
+                                "Transaction Not Found.");
+                    }
+
+                    break;
+
+                case 4:
+
+                    System.out.print(
+                            "Enter ID to Delete: ");
+
+                    int deleteId =
+                            sc.nextInt();
+
+                    Transaction deleted =
+                            list.delete(deleteId);
+
+                    if (deleted != null) {
+
+                        undoStack.push(
+                                new Action(
+                                        "DELETE",
+                                        deleted));
+
+                        System.out.println(
+                                "Transaction Deleted.");
+                    } else {
+
+                        System.out.println(
+                                "Transaction Not Found.");
+                    }
+
+                    break;
+
+                case 5:
+
+                    if (undoStack.isEmpty()) {
+
+                        System.out.println(
+                                "Nothing to Undo.");
+
+                        break;
+                    }
+
+                    Action action =
+                            undoStack.pop();
+
+                    if (action.actionType
+                            .equals("ADD")) {
+
+                        list.delete(
+                                action.transaction.getId());
+
+                        System.out.println(
+                                "Undo Add Transaction Success.");
+                    } else {
+
+                        list.add(
+                                action.transaction);
+
+                        System.out.println(
+                                "Undo Delete Transaction Success.");
+                    }
+
+                    break;
+
+                case 6:
+
+                    report.displayReport();
+
+                    break;
+
+                case 7:
+
+                    System.out.println(
+                            "Thank you for using the system.");
+
+                    System.exit(0);
+
+                    break;
+
+                default:
+
+                    System.out.println(
+                            "Invalid Choice!");
+            }
+        }
+    }
+}
+Sau khi tạo project
+Trong NetBeans bạn phải có 6 file:
+
+BankTransaction.java
+Transaction.java
+TransactionNode.java
+TransactionLinkedList.java
+Action.java
+ReportManager.java
+Package phải giống nhau
+Ví dụ tất cả đều là:
+
+package banktransaction;
+Nếu NetBeans của bạn đang hiện như này
+Source Packages
+└── banktransaction
+thì tất cả 6 file đều phải nằm trong package:
+
+banktransaction
+Nếu bạn gửi ảnh cây thư mục hiện tại trong NetBeans (phần Source Packages bên trái), mình có thể chỉ chính xác file nào chứa đoạn code nào để tránh lỗi compile.
 
 
