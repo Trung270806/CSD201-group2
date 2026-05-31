@@ -1,1 +1,126 @@
-ENTRY 001: RE-ARCHITECTURING THE CLASS DIAGRAM (SỬA ĐỔI KIẾN TRÚC HỆ THỐNG)Prompt Type: DECISION-MAKING   Stage/Component: Decomposition / Abstraction   Problem/Context: Nhóm cần thiết kế cấu trúc Class Diagram ban đầu cho đồ án Flash Sale sao cho đúng chuẩn, quản lý được các thực thể dữ liệu và không vi phạm quy chế phân rã hệ thống.  Prompt to AI (NGUYÊN VĂN): "classDiagram class BankTransaction { +main(String[] args) } class Record { <> #id : int +getId() int +display() } class Transaction { -type : String -amount : double -month : int -description : String +getType() String +getAmount() double +getMonth() int +getDescription() String +display() } class Report { <> +displayReport()* } class ReportManager { -monthlyTotal : double[] +addAmount(month, amount) +displayReport() } class TransactionLinkedList { -head : TransactionNode +add(Transaction) +display() +searchById(id) Transaction +delete(id) Transaction } class TransactionNode { +data : Transaction +next : TransactionNode } class Action { +actionType : String +transaction : Transaction } Record <|-- Transaction Report <|-- ReportManager TransactionLinkedList *-- TransactionNode : contains TransactionNode -- Transaction : stores Action --> Transaction : references BankTransaction ..> TransactionLinkedList : uses BankTransaction ..> ReportManager : uses BankTransaction ..> Action : uses BankTransaction ..> Transaction : creates giải thích class diagram sau"AI Response (Summary): AI đã giải thích cấu trúc mã Mermaid trên là một hệ thống quản lý giao dịch ngân hàng cơ bản, sử dụng cấu trúc dữ liệu Danh sách liên kết đơn (TransactionLinkedList) để quản lý các nút giao dịch, có lớp trừu tượng Record, Report và tuân thủ các mối quan hệ cấu thành (Composition), phụ thuộc (Dependency).Human Delta & Reflection (PHẦN QUAN TRỌNG NHẤT):   Critical Thinking: AI đã phân tích chính xác các mối quan hệ OOP trong đoạn mã được cung cấp. Tuy nhiên, tôi nhận ra cấu trúc này mắc lỗi Context Misunderstanding (Hallucination về ngữ cảnh đề bài). Sơ đồ này hoàn toàn là một bài quản lý ngân hàng thuần túy, bỏ quên toàn bộ 6 Entity cốt lõi lưu trong 6 file CSV mà đề bài LAB211 bắt buộc (Product, Customer, FlashSaleEvent, FlashSaleItem, Order, OrderDetail). Nếu giữ nguyên sơ đồ này, nhóm sẽ bị chấm 0% điểm ở tiêu chí Phân rã hệ thống (Decomposition) do thiếu thực thể kho hàng.  Contextualization: Đề bài yêu cầu hệ thống bắt buộc áp dụng cấu trúc MVC 4 tầng. Toàn bộ logic trừ kho, tính toán và xử lý khóa (Locking) phải nằm ở tầng Model/Repository, không được rò rỉ ra Controller hay View. Sơ đồ hiện tại đang gộp chung chức năng chạy máy ảo vào BankTransaction, vi phạm quy chế phân rã.  Creative Synthesis: Tôi đã hướng dẫn AI loại bỏ các lớp nghiệp vụ ngân hàng cũ (Transaction, ReportManager). Thay vào đó, tôi đề xuất thiết kế một lớp cha trừu tượng BaseEntity (thay cho Record) và ép cả 6 thực thể bắt buộc phải kế thừa lớp này. Đồng thời, tôi bổ sung thêm tầng CsvRepository<T> generic và FlashSaleItemRepository để tách biệt logic xử lý file.  Decision Ownership: Quyết định đập đi xây lại toàn bộ Class Diagram ban đầu. Tách biệt hệ thống thành 4 package rõ ràng theo kiến trúc MVC: model, repository, controller, và view. Bổ sung thêm trường dữ liệu version vào lớp FlashSaleItem để làm nền tảng cho giải thuật Khóa lạc quan (Optimistic Locking).  Evidence: File sơ đồ lớp đã chuẩn hóa docs/class_diagram.png khớp với cấu trúc gói (package) thực tế trong mã nguồn Java.  🟢 ENTRY 002: IMPLEMENTING & FIXING CONCURRENCY LOCKING (TRIỂN KHAI VÀ SỬA LỖI ĐỒNG BỘ FILE)Prompt Type: PROBLEM-SOLVING   Stage/Component: Algorithms   Problem/Context: Cần viết mã nguồn Java 1.8 cho tầng Repository (FlashSaleItemRepository) nhằm xử lý bài toán cập nhật tồn kho (soldQty) trên file CSV phẳng thông qua 4 kịch bản khóa: NO_LOCK, SYNCHRONIZED, FILE_LOCK, và OPTIMISTIC.  Prompt to AI (NGUYÊN VĂN): "code cho tôi dự án này bằng ngôn ngữ java với java phiên bản 1.8"AI Response (Summary): AI đã cung cấp bộ mã nguồn hoàn chỉnh cho các tầng. Trong đó lớp FlashSaleItemRepository chứa đầy đủ 4 hàm xử lý theo yêu cầu. Riêng hàm sellWithOptimisticLock, AI viết thuật toán đọc file CSV tự do, tăng biến version lên 1, cập nhật soldQty cục bộ rồi lưu đè danh sách xuống file và khẳng định mã nguồn này đã an toàn đa luồng.Human Delta & Reflection (PHẦN QUAN TRỌNG NHẤT):   Critical Thinking: Qua việc trace thuật toán, tôi phát hiện AI đã mắc lỗi Oversimplification / Complex Logic Error (Hallucination nghiêm trọng về lập trình đa luồng). AI giả định rằng chỉ cần tăng số version lên là xong. Nhưng trong môi trường đa luồng truy cập file phẳng CSV, nếu không có một khối đồng bộ cực ngắn (synchronized block) bọc quanh bước ghi file để đọc lại và kiểm tra version (Check-and-Act), các luồng sẽ đồng thời đọc cùng một số version cũ, cùng tăng lên 1 đơn vị, rồi ghi đè loạn xạ lên nhau. Điều này khiến cơ chế Khóa lạc quan bị vô hiệu hóa hoàn toàn, gây ra hiện tượng âm kho nặng y hệt như kịch bản không khóa.  Contextualization: AI đang nhầm lẫn hệ thống file phẳng với môi trường Database (vốn có cơ chế ACID hỗ trợ khóa tự động bằng câu lệnh WHERE version = current_version). Trong bài toán này, mọi thao tác I/O trên file CSV đều phải xử lý thủ công bằng mã Java thuần.  Creative Synthesis: Tôi đã can thiệp và sửa lại logic của AI bằng cách bọc công đoạn lưu file của hàm sellWithOptimisticLock vào một khối synchronized(this). Trong khối này, tôi bắt buộc hệ thống phải chạy lại hàm findAll() để lấy dữ liệu thực tế mới nhất từ file CSV lên. Nếu phát hiện phiên bản sản phẩm trong file (dbTarget.getVersion()) đã khác với phiên bản luồng hiện tại đang giữ (currentVersion), hệ thống sẽ lập tức chặn lại và ném ra OptimisticLockException.  Decision Ownership: Quyết định áp dụng tư duy "Khóa lạc quan khi đọc – Khóa bi quan khi ghi" trên môi trường File I/O để triệt tiêu hoàn toàn lỗi Race Condition âm kho, bảo vệ tính toàn vẹn của dữ liệu.  Evidence: Đoạn code re-check version nằm trong khối synchronized của hàm sellWithOptimisticLock() tại file src/repository/FlashSaleItemRepository.java.🟢 ENTRY 003: SIMULATING TRUE CONCURRENCY WITH COUNTDOWNLATCH (THIẾT KẾ GIẢ LẬP ĐA LUỒNG ĐỒNG THỜI)Prompt Type: VERIFICATION   Stage/Component: Algorithms   Problem/Context: Xây dựng công cụ chạy máy ảo SimulatorController ở Tuần 8 để kích hoạt hàng trăm luồng khách hàng đồng thời lao vào mua hàng, nhằm đo đạc chính xác Throughput (TPS) và tỷ lệ âm kho phục vụ cho bài báo cáo nghiên cứu.  Prompt to AI (NGUYÊN VĂN): "đóng thành 1 folder cho tôi" (Yêu cầu gom toàn bộ cấu trúc code lõi đa luồng và hàm mô phỏng vào một thư mục chuẩn).AI Response (Summary): AI đã tổ chức lại mã nguồn thành cấu trúc 5 thư mục chuẩn theo yêu cầu của đề bài (model, exception, repository, controller, và file MainApp). Trong lớp SimulatorController, AI triển khai giải thuật giả lập bằng cách sử dụng ExecutorService kết hợp với 2 tầng khóa CountDownLatch.  Human Delta & Reflection (PHẦN QUAN TRỌNG NHẤT):   Critical Thinking: Tôi đã thực hiện kiểm thử và đánh giá kỹ thuật bẫy luồng mà AI cung cấp. AI đã thiết kế rất chính xác khi sử dụng startLatch = new CountDownLatch(1) đóng vai trò như một "phát súng lệnh". Nếu chỉ dùng vòng lặp for để kích hoạt luồng thông thường, các luồng sẽ chạy rải rác do độ trễ khởi tạo của Hệ điều hành, khiến kịch bản NO_LOCK không thể kích hoạt được "cửa sổ nguy hiểm" (Race Window) để gây ra lỗi âm kho. Nhờ việc ép tất cả các luồng phải đứng đợi ở lệnh startLatch.await(), khi gọi startLatch.countDown(), toàn bộ hàng trăm luồng mới thực sự "đâm sầm" vào file CSV cùng một mili-giây, tạo ra môi trường Flash Sale khốc liệt đúng thực tế.  Contextualization: Việc đo đạc thời gian chạy (elapsed time) phải được đặt chính xác ngay sau lệnh bắn súng và kết thúc khi endLatch.await() hoàn thành để tránh tính toán sai lệch Throughput (TPS), vì thời gian khởi tạo Thread pool ban đầu rất lớn.  Creative Synthesis: Tôi đã kết hợp thuật toán điều khiển luồng này với bộ đếm an toàn đa luồng AtomicInteger để ghi nhận chính xác số đơn thành công và đơn thất bại mà không bị xung đột bộ nhớ giữa các thread.Decision Ownership: Quyết định phê duyệt và áp dụng kiến trúc Simulator sử dụng cặp đôi CountDownLatch (startLatch kiểm soát xuất phát đồng thời, endLatch kiểm soát thời điểm về đích) để đảm bảo số liệu thực nghiệm thu được có giá trị khoa học cao phục vụ cho việc vẽ biểu đồ ở Tuần 9.  Evidence: Hàm runSimulation() trong file src/controller/SimulatorController.java biên dịch và chạy thành công, chứng minh được kịch bản NO_LOCK bị lỗi âm kho còn SYNCHRONIZED thì an toàn tuyệt đối.  
+
+---
+
+### 🟢 ENTRY 001: RE-ARCHITECTURING THE CLASS DIAGRAM (SỬA ĐỔI KIẾN TRÚC HỆ THỐNG)
+
+* 
+**Prompt Type:** DECISION-MAKING 
+
+
+* 
+**Stage/Component:** Decomposition / Abstraction 
+
+
+* 
+**Problem/Context:** Nhóm cần thiết kế cấu trúc Class Diagram ban đầu cho đồ án Flash Sale sao cho đúng chuẩn, quản lý được các thực thể dữ liệu và không vi phạm quy chế phân rã hệ thống.
+
+
+* **Prompt to AI (NGUYÊN VĂN):** *"classDiagram class BankTransaction { +main(String[] args) } class Record { <> #id : int +getId() int +display()* } class Transaction { -type : String -amount : double -month : int -description : String +getType() String +getAmount() double +getMonth() int +getDescription() String +display() } class Report { <> +displayReport()* } class ReportManager { -monthlyTotal : double[] +addAmount(month, amount) +displayReport() } class TransactionLinkedList { -head : TransactionNode +add(Transaction) +display() +searchById(id) Transaction +delete(id) Transaction } class TransactionNode { +data : Transaction +next : TransactionNode } class Action { +actionType : String +transaction : Transaction } Record <|-- Transaction Report <|-- ReportManager TransactionLinkedList *-- TransactionNode : contains TransactionNode *-- Transaction : stores Action --> Transaction : references BankTransaction ..> TransactionLinkedList : uses BankTransaction ..> ReportManager : uses BankTransaction ..> Action : uses BankTransaction ..> Transaction : creates giải thích class diagram sau"*
+* **AI Response (Summary):** AI đã giải thích cấu trúc mã Mermaid trên là một hệ thống quản lý giao dịch ngân hàng cơ bản, sử dụng cấu trúc dữ liệu Danh sách liên kết đơn (`TransactionLinkedList`) để quản lý các nút giao dịch, có lớp trừu tượng `Record`, `Report` và tuân thủ các mối quan hệ cấu thành (Composition), phụ thuộc (Dependency).
+* 
+**Human Delta & Reflection (PHẦN QUAN TRỌNG NHẤT):** 
+
+
+* **Critical Thinking:** AI đã phân tích chính xác các mối quan hệ OOP trong đoạn mã được cung cấp. Tuy nhiên, tôi nhận ra cấu trúc này mắc lỗi **Context Misunderstanding (Hallucination về ngữ cảnh đề bài)**. Sơ đồ này hoàn toàn là một bài quản lý ngân hàng thuần túy, bỏ quên toàn bộ **6 Entity cốt lõi** lưu trong **6 file CSV** mà đề bài LAB211 bắt buộc (`Product`, `Customer`, `FlashSaleEvent`, `FlashSaleItem`, `Order`, `OrderDetail`). Nếu giữ nguyên sơ đồ này, nhóm sẽ bị chấm 0% điểm ở tiêu chí Phân rã hệ thống (Decomposition) do thiếu thực thể kho hàng.
+
+
+* 
+**Contextualization:** Đề bài yêu cầu hệ thống bắt buộc áp dụng cấu trúc **MVC 4 tầng**. Toàn bộ logic trừ kho, tính toán và xử lý khóa (Locking) phải nằm ở tầng Model/Repository, không được rò rỉ ra Controller hay View. Sơ đồ hiện tại đang gộp chung chức năng chạy máy ảo vào `BankTransaction`, vi phạm quy chế phân rã.
+
+
+* **Creative Synthesis:** Tôi đã hướng dẫn AI loại bỏ các lớp nghiệp vụ ngân hàng cũ (`Transaction`, `ReportManager`). Thay vào đó, tôi đề xuất thiết kế một lớp cha trừu tượng `BaseEntity` (thay cho `Record`) và ép cả 6 thực thể bắt buộc phải kế thừa lớp này. Đồng thời, tôi bổ sung thêm tầng `CsvRepository<T>` generic và `FlashSaleItemRepository` để tách biệt logic xử lý file.
+
+
+* **Decision Ownership:** Quyết định đập đi xây lại toàn bộ Class Diagram ban đầu. Tách biệt hệ thống thành 4 package rõ ràng theo kiến trúc MVC: `model`, `repository`, `controller`, và `view`. Bổ sung thêm trường dữ liệu `version` vào lớp `FlashSaleItem` để làm nền tảng cho giải thuật Khóa lạc quan (Optimistic Locking).
+
+
+
+
+* 
+**Evidence:** File sơ đồ lớp đã chuẩn hóa `docs/class_diagram.png` khớp với cấu trúc gói (package) thực tế trong mã nguồn Java.
+
+
+
+---
+
+### 🟢 ENTRY 002: IMPLEMENTING & FIXING CONCURRENCY LOCKING (TRIỂN KHAI VÀ SỬA LỖI ĐỒNG BỘ FILE)
+
+* 
+**Prompt Type:** PROBLEM-SOLVING 
+
+
+* 
+**Stage/Component:** Algorithms 
+
+
+* 
+**Problem/Context:** Cần viết mã nguồn Java 1.8 cho tầng Repository (`FlashSaleItemRepository`) nhằm xử lý bài toán cập nhật tồn kho (`soldQty`) trên file CSV phẳng thông qua 4 kịch bản khóa: `NO_LOCK`, `SYNCHRONIZED`, `FILE_LOCK`, và `OPTIMISTIC`.
+
+
+* **Prompt to AI (NGUYÊN VĂN):** *"code cho tôi dự án này bằng ngôn ngữ java với java phiên bản 1.8"*
+* **AI Response (Summary):** AI đã cung cấp bộ mã nguồn hoàn chỉnh cho các tầng. Trong đó lớp `FlashSaleItemRepository` chứa đầy đủ 4 hàm xử lý theo yêu cầu. Riêng hàm `sellWithOptimisticLock`, AI viết thuật toán đọc file CSV tự do, tăng biến `version` lên 1, cập nhật `soldQty` cục bộ rồi lưu đè danh sách xuống file và khẳng định mã nguồn này đã an toàn đa luồng.
+* 
+**Human Delta & Reflection (PHẦN QUAN TRỌNG NHẤT):** 
+
+
+* 
+**Critical Thinking:** Qua việc trace thuật toán, tôi phát hiện AI đã mắc lỗi **Oversimplification / Complex Logic Error (Hallucination nghiêm trọng về lập trình đa luồng)**. AI giả định rằng chỉ cần tăng số `version` lên là xong. Nhưng trong môi trường đa luồng truy cập file phẳng CSV, nếu không có một khối đồng bộ cực ngắn (`synchronized block`) bọc quanh bước ghi file để đọc lại và kiểm tra version (Check-and-Act), các luồng sẽ đồng thời đọc cùng một số version cũ, cùng tăng lên 1 đơn vị, rồi ghi đè loạn xạ lên nhau. Điều này khiến cơ chế Khóa lạc quan bị vô hiệu hóa hoàn toàn, gây ra hiện tượng **âm kho nặng** y hệt như kịch bản không khóa.
+
+
+* **Contextualization:** AI đang nhầm lẫn hệ thống file phẳng với môi trường Database (vốn có cơ chế ACID hỗ trợ khóa tự động bằng câu lệnh `WHERE version = current_version`). Trong bài toán này, mọi thao tác I/O trên file CSV đều phải xử lý thủ công bằng mã Java thuần.
+
+
+* **Creative Synthesis:** Tôi đã can thiệp và sửa lại logic của AI bằng cách bọc công đoạn lưu file của hàm `sellWithOptimisticLock` vào một khối `synchronized(this)`. Trong khối này, tôi bắt buộc hệ thống phải chạy lại hàm `findAll()` để lấy dữ liệu thực tế mới nhất từ file CSV lên. Nếu phát hiện phiên bản sản phẩm trong file (`dbTarget.getVersion()`) đã khác với phiên bản luồng hiện tại đang giữ (`currentVersion`), hệ thống sẽ lập tức chặn lại và ném ra `OptimisticLockException`.
+
+
+* 
+**Decision Ownership:** Quyết định áp dụng tư duy "Khóa lạc quan khi đọc – Khóa bi quan khi ghi" trên môi trường File I/O để triệt tiêu hoàn toàn lỗi Race Condition âm kho, bảo vệ tính toàn vẹn của dữ liệu.
+
+
+
+
+* **Evidence:** Đoạn code re-check version nằm trong khối `synchronized` của hàm `sellWithOptimisticLock()` tại file `src/repository/FlashSaleItemRepository.java`.
+
+---
+
+### 🟢 ENTRY 003: SIMULATING TRUE CONCURRENCY WITH COUNTDOWNLATCH (THIẾT KẾ GIẢ LẬP ĐA LUỒNG ĐỒNG THỜI)
+
+* 
+**Prompt Type:** VERIFICATION 
+
+
+* 
+**Stage/Component:** Algorithms 
+
+
+* 
+**Problem/Context:** Xây dựng công cụ chạy máy ảo `SimulatorController` ở Tuần 8 để kích hoạt hàng trăm luồng khách hàng đồng thời lao vào mua hàng, nhằm đo đạc chính xác Throughput (TPS) và tỷ lệ âm kho phục vụ cho bài báo cáo nghiên cứu.
+
+
+* **Prompt to AI (NGUYÊN VĂN):** *"đóng thành 1 folder cho tôi"* (Yêu cầu gom toàn bộ cấu trúc code lõi đa luồng và hàm mô phỏng vào một thư mục chuẩn).
+* 
+**AI Response (Summary):** AI đã tổ chức lại mã nguồn thành cấu trúc 5 thư mục chuẩn theo yêu cầu của đề bài (`model`, `exception`, `repository`, `controller`, và file `MainApp`). Trong lớp `SimulatorController`, AI triển khai giải thuật giả lập bằng cách sử dụng `ExecutorService` kết hợp với 2 tầng khóa `CountDownLatch`.
+
+
+* 
+**Human Delta & Reflection (PHẦN QUAN TRỌNG NHẤT):** 
+
+
+* **Critical Thinking:** Tôi đã thực hiện kiểm thử và đánh giá kỹ thuật bẫy luồng mà AI cung cấp. AI đã thiết kế rất chính xác khi sử dụng `startLatch = new CountDownLatch(1)` đóng vai trò như một "phát súng lệnh". Nếu chỉ dùng vòng lặp `for` để kích hoạt luồng thông thường, các luồng sẽ chạy rải rác do độ trễ khởi tạo của Hệ điều hành, khiến kịch bản `NO_LOCK` không thể kích hoạt được "cửa sổ nguy hiểm" (Race Window) để gây ra lỗi âm kho. Nhờ việc ép tất cả các luồng phải đứng đợi ở lệnh `startLatch.await()`, khi gọi `startLatch.countDown()`, toàn bộ hàng trăm luồng mới thực sự "đâm sầm" vào file CSV cùng một mili-giây, tạo ra môi trường Flash Sale khốc liệt đúng thực tế.
+
+
+* 
+**Contextualization:** Việc đo đạc thời gian chạy (`elapsed time`) phải được đặt chính xác ngay sau lệnh bắn súng và kết thúc khi `endLatch.await()` hoàn thành để tránh tính toán sai lệch Throughput (TPS), vì thời gian khởi tạo Thread pool ban đầu rất lớn.
+
+
+* **Creative Synthesis:** Tôi đã kết hợp thuật toán điều khiển luồng này với bộ đếm an toàn đa luồng `AtomicInteger` để ghi nhận chính xác số đơn thành công và đơn thất bại mà không bị xung đột bộ nhớ giữa các thread.
+* 
+**Decision Ownership:** Quyết định phê duyệt và áp dụng kiến trúc Simulator sử dụng cặp đôi `CountDownLatch` (`startLatch` kiểm soát xuất phát đồng thời, `endLatch` kiểm soát thời điểm về đích) để đảm bảo số liệu thực nghiệm thu được có giá trị khoa học cao phục vụ cho việc vẽ biểu đồ ở Tuần 9.
+
+
+
+
+* 
+**Evidence:** Hàm `runSimulation()` trong file `src/controller/SimulatorController.java` biên dịch và chạy thành công, chứng minh được kịch bản `NO_LOCK` bị lỗi âm kho còn `SYNCHRONIZED` thì an toàn tuyệt đối.
+
+
