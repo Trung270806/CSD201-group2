@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Bank Transaction History System (CSD201 Project)
 
 This repository contains the complete Java implementation and empirical study for the **Bank Transaction History System**, matching the strict, revised 10-week academic plan for the Data Structures & Algorithms course (CSD201).
