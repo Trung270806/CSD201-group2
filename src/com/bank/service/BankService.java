@@ -13,7 +13,7 @@ public class BankService {
     private CustomHashTable transactionLedger;
     private Account[] accounts;
     private int accountCount;
-    private static final int MAX_ACCOUNTS = 1000;
+    private static final int MAX_ACCOUNTS = 50000;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -133,6 +133,141 @@ public class BankService {
 
     public Transaction getTransaction(String txId) {
         return transactionLedger.get(txId);
+    }
+
+    public Transaction[] getTransactionsByAccount(String accountNum) {
+        Transaction[] allTx = transactionLedger.getAll();
+        int count = 0;
+        for (Transaction tx : allTx) {
+            if (tx != null && tx.getAccount().equalsIgnoreCase(accountNum)) {
+                count++;
+            }
+        }
+        
+        Transaction[] result = new Transaction[count];
+        int idx = 0;
+        for (Transaction tx : allTx) {
+            if (tx != null && tx.getAccount().equalsIgnoreCase(accountNum)) {
+                result[idx++] = tx;
+            }
+        }
+        return result;
+    }
+
+    public Transaction[] getTransactionsByType(TransactionType type) {
+        Transaction[] allTx = transactionLedger.getAll();
+        int count = 0;
+        for (Transaction tx : allTx) {
+            if (tx != null && tx.getType() == type) {
+                count++;
+            }
+        }
+        Transaction[] result = new Transaction[count];
+        int idx = 0;
+        for (Transaction tx : allTx) {
+            if (tx != null && tx.getType() == type) {
+                result[idx++] = tx;
+            }
+        }
+        return result;
+    }
+
+    public Transaction[] getTransactionsByMonth(int month) {
+        Transaction[] allTx = transactionLedger.getAll();
+        int count = 0;
+        for (Transaction tx : allTx) {
+            if (tx != null && tx.getTime() != null && tx.getTime().length() >= 7) {
+                try {
+                    int txMonth = Integer.parseInt(tx.getTime().substring(5, 7));
+                    if (txMonth == month) {
+                        count++;
+                    }
+                } catch (NumberFormatException e) {
+                    // Ignore
+                }
+            }
+        }
+        Transaction[] result = new Transaction[count];
+        int idx = 0;
+        for (Transaction tx : allTx) {
+            if (tx != null && tx.getTime() != null && tx.getTime().length() >= 7) {
+                try {
+                    int txMonth = Integer.parseInt(tx.getTime().substring(5, 7));
+                    if (txMonth == month) {
+                        result[idx++] = tx;
+                    }
+                } catch (NumberFormatException e) {
+                    // Ignore
+                }
+            }
+        }
+        return result;
+    }
+
+    public Transaction[] getTransactionsByCombination(String accountNum, TransactionType type, int month) {
+        Transaction[] allTx = transactionLedger.getAll();
+        int count = 0;
+        for (Transaction tx : allTx) {
+            if (tx == null) continue;
+            
+            // Check account
+            if (accountNum != null && !accountNum.isEmpty() && !tx.getAccount().equalsIgnoreCase(accountNum)) {
+                continue;
+            }
+            
+            // Check type
+            if (type != null && tx.getType() != type) {
+                continue;
+            }
+            
+            // Check month
+            if (month > 0 && month <= 12) {
+                if (tx.getTime() == null || tx.getTime().length() < 7) {
+                    continue;
+                }
+                try {
+                    int txMonth = Integer.parseInt(tx.getTime().substring(5, 7));
+                    if (txMonth != month) {
+                        continue;
+                    }
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+            }
+            
+            count++;
+        }
+        
+        Transaction[] result = new Transaction[count];
+        int idx = 0;
+        for (Transaction tx : allTx) {
+            if (tx == null) continue;
+            
+            if (accountNum != null && !accountNum.isEmpty() && !tx.getAccount().equalsIgnoreCase(accountNum)) {
+                continue;
+            }
+            
+            if (type != null && tx.getType() != type) {
+                continue;
+            }
+            
+            if (month > 0 && month <= 12) {
+                if (tx.getTime() == null || tx.getTime().length() < 7) {
+                    continue;
+                }
+                try {
+                    int txMonth = Integer.parseInt(tx.getTime().substring(5, 7));
+                    if (txMonth != month) {
+                        continue;
+                    }
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+            }
+            
+            result[idx++] = tx;
+        }
+        return result;
     }
 
     public Transaction[] getAllTransactions() {

@@ -36,7 +36,7 @@ public class ConsoleMenu {
         boolean running = true;
         while (running) {
             printMenuHeader();
-            int choice = readIntInput("Select an option (1-9): ");
+            int choice = readIntInput("Select an option (1-7): ");
             switch (choice) {
                 case 1:
                     viewAccounts();
@@ -48,43 +48,35 @@ public class ConsoleMenu {
                     postNewTransaction();
                     break;
                 case 4:
-                    reverseTransaction();
-                    break;
-                case 5:
                     searchTransaction();
                     break;
-                case 6:
+                case 5:
                     viewAnalyticsDashboard();
                     break;
-                case 7:
-                    generateSimulationData();
-                    break;
-                case 8:
+                case 6:
                     runPerformanceBenchmark();
                     break;
-                case 9:
-                    saveAndExit();
+                case 7:
+                    exitApp();
                     running = false;
                     break;
                 default:
-                    System.out.println("\n[!] Invalid choice. Please choose a value from 1 to 9.");
+                    System.out.println("\n[!] Invalid choice. Please choose a value from 1 to 7.");
             }
         }
     }
 
     private void printMenuHeader() {
         System.out.println("\n====================================================");
-        System.out.println("                 CLI CONTROL PANEL                  ");
+        System.out.println("             BankTransaction Interface              ");
         System.out.println("====================================================");
         System.out.println("1. View Accounts & Balances");
         System.out.println("2. Add New Account");
         System.out.println("3. Post New Transaction (Deposit/Withdrawal)");
-        System.out.println("4. Process Reversal Transaction (Undo alternative)");
-        System.out.println("5. Fast Lookup by Transaction ID [O(1) Hash Table]");
-        System.out.println("6. View 12-Month Cash Flow Analytics Dashboard");
-        System.out.println("7. Generate Simulation Dataset (N >= 10,000)");
-        System.out.println("8. Run Performance Benchmark (Hash Table vs. Linked List)");
-        System.out.println("9. Save Ledger and Exit");
+        System.out.println("4. Fast Lookup by Transaction ID [O(1) Hash Table]");
+        System.out.println("5. View 12-Month Cash Flow Analytics Dashboard");
+        System.out.println("6. Run Performance Benchmark (Hash Table vs. Linked List)");
+        System.out.println("7. Exit");
         System.out.println("====================================================");
     }
 
@@ -117,7 +109,8 @@ public class ConsoleMenu {
 
         boolean success = bankService.addAccount(accNum, balance);
         if (success) {
-            System.out.printf("[✓] Account %s successfully created.\n", accNum);
+            System.out.printf("[+] Account %s successfully created.\n", accNum);
+            bankService.saveToCSV(accountsPath, transactionsPath);
         } else {
             System.out.println("[!] Failed to create account. It might already exist or system is at capacity.");
         }
@@ -132,77 +125,206 @@ public class ConsoleMenu {
             return;
         }
         System.out.println("Current Account Balance: " + acc.getBalance());
-        System.out.println("Select Type: 1. DEPOSIT | 2. WITHDRAWAL");
-        int typeChoice = readIntInput("Your choice: ");
-        TransactionType type;
-        if (typeChoice == 1) {
-            type = TransactionType.DEPOSIT;
-        } else if (typeChoice == 2) {
-            type = TransactionType.WITHDRAWAL;
-        } else {
-            System.out.println("[!] Invalid type selection.");
-            return;
-        }
 
-        double amount = readDoubleInput("Enter transaction amount: ");
-        String result = bankService.postTransaction(accNum, amount, type);
-        if (result.startsWith("SUCCESS")) {
-            System.out.println("[✓] " + result);
-            System.out.println("New Account Balance: " + acc.getBalance());
-        } else {
-            System.out.println("[X] " + result);
-        }
-    }
+        boolean transactionDone = false;
+        while (!transactionDone) {
+            System.out.println("\nSelect Type: 1. DEPOSIT | 2. WITHDRAWAL");
+            int typeChoice = readIntInput("Your choice: ");
+            TransactionType type;
+            if (typeChoice == 1) {
+                type = TransactionType.DEPOSIT;
+            } else if (typeChoice == 2) {
+                type = TransactionType.WITHDRAWAL;
+            } else {
+                System.out.println("[!] Invalid type selection.");
+                continue;
+            }
 
-    private void reverseTransaction() {
-        System.out.println("\n--- [4] REVERSE TRANSACTION (AUDIT LEDGER CORRECTION) ---");
-        String txId = readStringInput("Enter Transaction ID to reverse: ").trim();
-        if (txId.isEmpty()) {
-            return;
-        }
+            double amount = readDoubleInput("Enter transaction amount: ");
+            if (amount <= 0) {
+                System.out.println("[!] Transaction amount must be positive.");
+                continue;
+            }
 
-        System.out.println("Executing reversal protocol...");
-        String result = bankService.reverseTransaction(txId);
-        if (result.startsWith("SUCCESS")) {
-            System.out.println("[✓] " + result);
-        } else {
-            System.out.println("[X] " + result);
+            // Confirm step
+            System.out.println("\n[?] Confirm transaction details:");
+            System.out.println("    Account: " + accNum);
+            System.out.println("    Type:    " + type);
+            System.out.printf("    Amount:  %,.2f VND\n", amount);
+            System.out.println("------------------------------------");
+            System.out.println("1. Confirm transaction");
+            System.out.println("2. Back to type selection");
+            int confirmChoice = readIntInput("Your choice (1-2): ");
+
+            if (confirmChoice == 1) {
+                String result = bankService.postTransaction(accNum, amount, type);
+                if (result.startsWith("SUCCESS")) {
+                    System.out.println("[+] " + result);
+                    System.out.println("New Account Balance: " + acc.getBalance());
+                    bankService.saveToCSV(accountsPath, transactionsPath);
+                } else {
+                    System.out.println("[-] " + result);
+                }
+                transactionDone = true;
+            } else if (confirmChoice == 2) {
+                System.out.println("Returning to transaction type selection...");
+            } else {
+                System.out.println("[!] Invalid choice. Returning to transaction type selection...");
+            }
         }
     }
 
     private void searchTransaction() {
-        System.out.println("\n--- [5] FAST O(1) TRANSACTION LOOKUP ---");
-        String txId = readStringInput("Enter Transaction ID: ").trim();
-        if (txId.isEmpty()) {
-            return;
-        }
+        System.out.println("\n--- [4] FAST TRANSACTION LOOKUP ---");
+        System.out.println("Select Search Mode:");
+        System.out.println("1. Search By ID (Transaction ID / Account Number)");
+        System.out.println("2. Search By Type (DEPOSIT / WITHDRAWAL)");
+        System.out.println("3. Search By Month (1-12)");
+        System.out.println("4. Search By Combination");
+        int mode = readIntInput("Your choice (1-4): ");
 
-        long startTime = System.nanoTime();
-        Transaction tx = bankService.getTransaction(txId);
-        long endTime = System.nanoTime();
+        if (mode == 1) {
+            System.out.println("\nSelect ID Type:");
+            System.out.println("1. Search by Transaction ID [O(1) Hash Table]");
+            System.out.println("2. Search by Account Number (User ID)");
+            int idChoice = readIntInput("Your choice (1-2): ");
 
-        if (tx != null) {
-            System.out.println("\n[✓] Transaction found:");
-            System.out.println("----------------------------------------------------");
-            System.out.println("ID:          " + tx.getId());
-            System.out.println("Account:     " + tx.getAccount());
-            System.out.println("Type:        " + tx.getType());
-            System.out.printf("Amount:      %.2f\n", tx.getAmount());
-            System.out.println("Timestamp:   " + tx.getTime());
-            System.out.println("----------------------------------------------------");
-            System.out.printf("Lookup lookup elapsed time: %d nanoseconds (~O(1) complexity)\n", (endTime - startTime));
+            if (idChoice == 1) {
+                String txId = readStringInput("Enter Transaction ID: ").trim();
+                if (txId.isEmpty()) return;
+
+                long startTime = System.nanoTime();
+                Transaction tx = bankService.getTransaction(txId);
+                long endTime = System.nanoTime();
+
+                if (tx != null) {
+                    System.out.println("\n[+] Transaction found:");
+                    System.out.println("----------------------------------------------------");
+                    System.out.println("ID:          " + tx.getId());
+                    System.out.println("Account:     " + tx.getAccount());
+                    System.out.println("Type:        " + tx.getType());
+                    System.out.printf("Amount:      %,.2f VND\n", tx.getAmount());
+                    System.out.println("Timestamp:   " + tx.getTime());
+                    System.out.println("----------------------------------------------------");
+                    System.out.printf("Lookup elapsed time: %d nanoseconds (~O(1) complexity)\n", (endTime - startTime));
+                } else {
+                    System.out.println("[-] Transaction ID not found in the Hash Table ledger.");
+                }
+            } else if (idChoice == 2) {
+                String accNum = readStringInput("Enter Account Number (User ID): ").trim();
+                if (accNum.isEmpty()) return;
+
+                Account acc = bankService.findAccount(accNum);
+                if (acc == null) {
+                    System.out.println("[-] Account not found.");
+                    return;
+                }
+
+                long startTime = System.nanoTime();
+                Transaction[] txs = bankService.getTransactionsByAccount(accNum);
+                long endTime = System.nanoTime();
+
+                System.out.println("\n[+] Transactions for Account: " + accNum);
+                System.out.printf("Current Balance: %,.2f VND\n", acc.getBalance());
+                displayTransactionsList(txs, endTime - startTime);
+            } else {
+                System.out.println("[-] Invalid choice.");
+            }
+
+        } else if (mode == 2) {
+            System.out.println("\nSelect Transaction Type:");
+            System.out.println("1. DEPOSIT");
+            System.out.println("2. WITHDRAWAL");
+            int typeChoice = readIntInput("Your choice (1-2): ");
+            TransactionType type = null;
+            if (typeChoice == 1) type = TransactionType.DEPOSIT;
+            else if (typeChoice == 2) type = TransactionType.WITHDRAWAL;
+            else {
+                System.out.println("[-] Invalid type choice.");
+                return;
+            }
+
+            long startTime = System.nanoTime();
+            Transaction[] txs = bankService.getTransactionsByType(type);
+            long endTime = System.nanoTime();
+
+            System.out.println("\n[+] Transactions of Type: " + type);
+            displayTransactionsList(txs, endTime - startTime);
+
+        } else if (mode == 3) {
+            int month = readIntInput("Enter Month (1-12): ");
+            if (month < 1 || month > 12) {
+                System.out.println("[-] Invalid month. Must be between 1 and 12.");
+                return;
+            }
+
+            long startTime = System.nanoTime();
+            Transaction[] txs = bankService.getTransactionsByMonth(month);
+            long endTime = System.nanoTime();
+
+            System.out.println("\n[+] Transactions recorded in Month: " + month);
+            displayTransactionsList(txs, endTime - startTime);
+
+        } else if (mode == 4) {
+            System.out.println("\n--- SEARCH BY COMBINATION ---");
+            String accNum = readStringInput("Enter Account Number (User ID) [or press Enter to skip]: ").trim();
+            
+            System.out.println("Select Transaction Type:");
+            System.out.println("0. Skip filtering by Type");
+            System.out.println("1. DEPOSIT");
+            System.out.println("2. WITHDRAWAL");
+            int typeChoice = readIntInput("Your choice (0-2): ");
+            TransactionType type = null;
+            if (typeChoice == 1) type = TransactionType.DEPOSIT;
+            else if (typeChoice == 2) type = TransactionType.WITHDRAWAL;
+
+            int month = readIntInput("Enter Month (1-12) [or 0 to skip]: ");
+            if (month < 0 || month > 12) {
+                System.out.println("[-] Invalid month.");
+                return;
+            }
+
+            long startTime = System.nanoTime();
+            Transaction[] txs = bankService.getTransactionsByCombination(accNum, type, month);
+            long endTime = System.nanoTime();
+
+            System.out.println("\n[+] Search Combination Results:");
+            if (accNum.length() > 0) System.out.println("    Account: " + accNum);
+            if (type != null) System.out.println("    Type:    " + type);
+            if (month > 0) System.out.println("    Month:   " + month);
+            
+            displayTransactionsList(txs, endTime - startTime);
+
         } else {
-            System.out.println("[!] Transaction ID not found in the Hash Table ledger.");
+            System.out.println("[-] Invalid lookup mode selected.");
+        }
+    }
+
+    private void displayTransactionsList(Transaction[] txs, long elapsedNs) {
+        if (txs == null || txs.length == 0) {
+            System.out.println("No transactions matching criteria found.");
+        } else {
+            System.out.println("------------------------------------------------------------------------------------------------------");
+            System.out.printf("%-25s | %-12s | %-15s | %-18s | %-20s\n", "Transaction ID", "Account ID", "Type", "Amount (VND)", "Timestamp");
+            System.out.println("------------------------------------------------------------------------------------------------------");
+            for (Transaction tx : txs) {
+                if (tx != null) {
+                    System.out.printf("%-25s | %-12s | %-15s | %-18.2f | %-20s\n",
+                            tx.getId(), tx.getAccount(), tx.getType(), tx.getAmount(), tx.getTime());
+                }
+            }
+            System.out.println("------------------------------------------------------------------------------------------------------");
+            System.out.printf("Retrieved %d transactions. Query elapsed time: %d nanoseconds\n", txs.length, elapsedNs);
         }
     }
 
     private void viewAnalyticsDashboard() {
-        System.out.println("\n--- [6] 12-MONTH CASH FLOW ANALYTICS DASHBOARD ---");
+        System.out.println("\n--- [5] 12-MONTH CASH FLOW ANALYTICS DASHBOARD ---");
         BankService.MonthlyReport[] reports = bankService.generateMonthlyAnalytics();
         
-        System.out.printf("%-10s | %-15s | %-15s | %-15s | %-15s\n", 
-                "Month", "Total Deposits", "Total Withdraws", "Total Reversals", "Net Cash Flow");
-        System.out.println("----------------------------------------------------------------------------------");
+        System.out.printf("%-10s | %-15s | %-15s\n", 
+                "Month", "Total Deposits", "Total Withdraws");
+        System.out.println("--------------------------------------------------");
         
         String[] months = {
             "January", "February", "March", "April", "May", "June", 
@@ -214,16 +336,16 @@ public class ConsoleMenu {
         
         for (int i = 0; i < 12; i++) {
             BankService.MonthlyReport rep = reports[i];
-            double volume = rep.getTotalVolume();
+            double volume = rep.depositSum + rep.withdrawalSum;
             if (volume > maxVolume) {
                 maxVolume = volume;
                 peakMonthIdx = i;
             }
-            System.out.printf("%-10s | %-15.2f | %-15.2f | %-15.2f | %-15.2f\n",
-                    months[i], rep.depositSum, rep.withdrawalSum, rep.reversalSum, rep.getNetFlow());
+            System.out.printf("%-10s | %-15.2f | %-15.2f\n",
+                    months[i], rep.depositSum, rep.withdrawalSum);
         }
 
-        System.out.println("----------------------------------------------------------------------------------");
+        System.out.println("--------------------------------------------------");
         if (peakMonthIdx != -1 && maxVolume > 0) {
             System.out.printf("Financial Insight: Peak transaction month is %s with total volume of %.2f VND.\n",
                     months[peakMonthIdx], maxVolume);
@@ -232,36 +354,14 @@ public class ConsoleMenu {
         }
     }
 
-    private void generateSimulationData() {
-        System.out.println("\n--- [7] GENERATE LARGE SIMULATION DATASET ---");
-        System.out.println("This action will overwrite current local accounts and transactions files.");
-        int count = readIntInput("Enter number of transactions to generate (e.g. 10000): ");
-        if (count < 1000) {
-            System.out.println("[!] For valid empirical benchmarks, please generate at least 1,000 transactions.");
-            return;
-        }
-
-        System.out.println("Generating datasets... Please wait.");
-        boolean success = DataGenerator.generateData(count, accountsPath, transactionsPath);
-        if (success) {
-            System.out.println("[✓] Successfully generated new datasets.");
-            System.out.println("Loading updated datasets into current active memory...");
-            bankService.loadFromCSV(accountsPath, transactionsPath);
-            System.out.println("Active accounts loaded: " + bankService.getAccounts().length);
-            System.out.println("Ledger transactions count: " + bankService.getAllTransactions().length);
-        } else {
-            System.out.println("[X] Generation failed.");
-        }
-    }
-
     private void runPerformanceBenchmark() {
-        System.out.println("\n--- [8] RUN EMPIRICAL PERFORMANCE BENCHMARK ---");
+        System.out.println("\n--- [7] RUN EMPIRICAL PERFORMANCE BENCHMARK ---");
         System.out.println("Research Question (RQ): How many times faster is custom Hash Table lookup compared to Singly Linked List?");
         System.out.println("This test runs random lookups on the active transactions database.");
         
         int count = bankService.getAllTransactions().length;
         if (count == 0) {
-            System.out.println("[!] Active transactions ledger is empty. Please run Option 7 to generate data first.");
+            System.out.println("[!] Active transactions ledger is empty. Please restart the application to generate data.");
             return;
         }
 
@@ -273,7 +373,7 @@ public class ConsoleMenu {
 
         BenchmarkService.BenchmarkResult res = BenchmarkService.runBenchmark(transactionsPath, lookups);
         if (res == null) {
-            System.out.println("[X] Benchmark failed to complete.");
+            System.out.println("[-] Benchmark failed to complete.");
             return;
         }
 
@@ -299,16 +399,7 @@ public class ConsoleMenu {
         System.out.println("====================================================");
     }
 
-    private void saveAndExit() {
-        System.out.println("\nSaving transaction history and active account balances to files...");
-        boolean success = bankService.saveToCSV(accountsPath, transactionsPath);
-        if (success) {
-            System.out.println("[✓] Data saved successfully to: ");
-            System.out.println("  - " + accountsPath);
-            System.out.println("  - " + transactionsPath);
-        } else {
-            System.out.println("[X] Warning: Fails to persist database to storage files.");
-        }
+    private void exitApp() {
         System.out.println("\nExiting Bank Transaction History System. Thank you!");
     }
 

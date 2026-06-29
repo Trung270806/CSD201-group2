@@ -28,7 +28,7 @@ public class DataGenerator {
         createParentDirectories(transactionsPath);
 
         // 1. Generate Accounts
-        int accountCount = 100; // Generate 100 unique accounts
+        int accountCount = 10000; // Generate 10000 unique accounts
         Account[] accounts = new Account[accountCount];
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(accountsPath))) {
             for (int i = 0; i < accountCount; i++) {
