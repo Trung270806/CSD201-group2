@@ -72,7 +72,7 @@ public class ConsoleMenu {
         System.out.println("====================================================");
         System.out.println("1. View Accounts & Balances");
         System.out.println("2. Add New Account");
-        System.out.println("3. Post New Transaction (Deposit/Withdrawal)");
+        System.out.println("3. Post a New Transaction (Deposit/Withdrawal)");
         System.out.println("4. Fast Lookup by Transaction ID [O(1) Hash Table]");
         System.out.println("5. View 12-Month Cash Flow Analytics Dashboard");
         System.out.println("6. Run Performance Benchmark (Hash Table vs. Linked List)");
@@ -124,11 +124,11 @@ public class ConsoleMenu {
             System.out.println("[!] Account not found.");
             return;
         }
-        System.out.println("Current Account Balance: " + acc.getBalance());
+        System.out.println("Current account balance: " + acc.getBalance());
 
         boolean transactionDone = false;
         while (!transactionDone) {
-            System.out.println("\nSelect Type: 1. DEPOSIT | 2. WITHDRAWAL");
+            System.out.println("\nSelect transaction type: 1. DEPOSIT | 2. WITHDRAWAL");
             int typeChoice = readIntInput("Your choice: ");
             TransactionType type;
             if (typeChoice == 1) {
@@ -153,7 +153,7 @@ public class ConsoleMenu {
             System.out.printf("    Amount:  %,.2f VND\n", amount);
             System.out.println("------------------------------------");
             System.out.println("1. Confirm transaction");
-            System.out.println("2. Back to type selection");
+            System.out.println("2. Back to transaction type selection");
             int confirmChoice = readIntInput("Your choice (1-2): ");
 
             if (confirmChoice == 1) {
