@@ -36,32 +36,36 @@ public class ConsoleMenu {
         boolean running = true;
         while (running) {
             printMenuHeader();
-            int choice = readIntInput("Select an option (1-7): ");
-            switch (choice) {
-                case 1:
-                    viewAccounts();
-                    break;
-                case 2:
-                    addNewAccount();
-                    break;
-                case 3:
-                    postNewTransaction();
-                    break;
-                case 4:
-                    searchTransaction();
-                    break;
-                case 5:
-                    viewAnalyticsDashboard();
-                    break;
-                case 6:
-                    runPerformanceBenchmark();
-                    break;
-                case 7:
-                    exitApp();
-                    running = false;
-                    break;
-                default:
-                    System.out.println("\n[!] Invalid choice. Please choose a value from 1 to 7.");
+            try {
+                int choice = readIntInput("Select an option (1-7): ");
+                switch (choice) {
+                    case 1:
+                        viewAccounts();
+                        break;
+                    case 2:
+                        addNewAccount();
+                        break;
+                    case 3:
+                        postNewTransaction();
+                        break;
+                    case 4:
+                        searchTransaction();
+                        break;
+                    case 5:
+                        viewAnalyticsDashboard();
+                        break;
+                    case 6:
+                        runPerformanceBenchmark();
+                        break;
+                    case 7:
+                        exitApp();
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("\n[!] Invalid choice. Please choose a value from 1 to 7.");
+                }
+            } catch (OperationCancelledException e) {
+                System.out.println("\n[i] " + e.getMessage());
             }
         }
     }
@@ -96,12 +100,12 @@ public class ConsoleMenu {
 
     private void addNewAccount() {
         System.out.println("\n--- [2] ADD NEW ACCOUNT ---");
-        String accNum = readStringInput("Enter new account number (e.g. ACC000001): ").trim();
+        String accNum = readStringInput("Enter new account number (e.g. ACC000001) [type 'exit' to cancel]: ").trim();
         if (accNum.isEmpty()) {
             System.out.println("[!] Account number cannot be empty.");
             return;
         }
-        double balance = readDoubleInput("Enter initial balance: ");
+        double balance = readDoubleInput("Enter initial balance [type 'exit' to cancel]: ");
         if (balance < 0) {
             System.out.println("[!] Initial balance cannot be negative.");
             return;
@@ -118,7 +122,7 @@ public class ConsoleMenu {
 
     private void postNewTransaction() {
         System.out.println("\n--- [3] POST NEW TRANSACTION ---");
-        String accNum = readStringInput("Enter account number: ").trim();
+        String accNum = readStringInput("Enter account number [type 'exit' to cancel]: ").trim();
         Account acc = bankService.findAccount(accNum);
         if (acc == null) {
             System.out.println("[!] Account not found.");
@@ -128,19 +132,22 @@ public class ConsoleMenu {
 
         boolean transactionDone = false;
         while (!transactionDone) {
-            System.out.println("\nSelect Type: 1. DEPOSIT | 2. WITHDRAWAL");
+            System.out.println("\nSelect Type: 1. DEPOSIT | 2. WITHDRAWAL | 3. EXIT/CANCEL");
             int typeChoice = readIntInput("Your choice: ");
             TransactionType type;
             if (typeChoice == 1) {
                 type = TransactionType.DEPOSIT;
             } else if (typeChoice == 2) {
                 type = TransactionType.WITHDRAWAL;
+            } else if (typeChoice == 3) {
+                System.out.println("Operation cancelled.");
+                return;
             } else {
                 System.out.println("[!] Invalid type selection.");
                 continue;
             }
 
-            double amount = readDoubleInput("Enter transaction amount: ");
+            double amount = readDoubleInput("Enter transaction amount [type 'exit' to cancel]: ");
             if (amount <= 0) {
                 System.out.println("[!] Transaction amount must be positive.");
                 continue;
@@ -154,7 +161,8 @@ public class ConsoleMenu {
             System.out.println("------------------------------------");
             System.out.println("1. Confirm transaction");
             System.out.println("2. Back to type selection");
-            int confirmChoice = readIntInput("Your choice (1-2): ");
+            System.out.println("3. Exit/Cancel transaction");
+            int confirmChoice = readIntInput("Your choice (1-3): ");
 
             if (confirmChoice == 1) {
                 String result = bankService.postTransaction(accNum, amount, type);
@@ -168,6 +176,9 @@ public class ConsoleMenu {
                 transactionDone = true;
             } else if (confirmChoice == 2) {
                 System.out.println("Returning to transaction type selection...");
+            } else if (confirmChoice == 3) {
+                System.out.println("Operation cancelled.");
+                return;
             } else {
                 System.out.println("[!] Invalid choice. Returning to transaction type selection...");
             }
@@ -181,16 +192,26 @@ public class ConsoleMenu {
         System.out.println("2. Search By Type (DEPOSIT / WITHDRAWAL)");
         System.out.println("3. Search By Month (1-12)");
         System.out.println("4. Search By Combination");
-        int mode = readIntInput("Your choice (1-4): ");
+        System.out.println("5. Exit/Back to Main Menu");
+        int mode = readIntInput("Your choice (1-5): ");
+
+        if (mode == 5) {
+            return;
+        }
 
         if (mode == 1) {
             System.out.println("\nSelect ID Type:");
             System.out.println("1. Search by Transaction ID [O(1) Hash Table]");
             System.out.println("2. Search by Account Number (User ID)");
-            int idChoice = readIntInput("Your choice (1-2): ");
+            System.out.println("3. Exit/Back to Search Menu");
+            int idChoice = readIntInput("Your choice (1-3): ");
+
+            if (idChoice == 3) {
+                return;
+            }
 
             if (idChoice == 1) {
-                String txId = readStringInput("Enter Transaction ID: ").trim();
+                String txId = readStringInput("Enter Transaction ID [type 'exit' to cancel]: ").trim();
                 if (txId.isEmpty()) return;
 
                 long startTime = System.nanoTime();
@@ -211,7 +232,7 @@ public class ConsoleMenu {
                     System.out.println("[-] Transaction ID not found in the Hash Table ledger.");
                 }
             } else if (idChoice == 2) {
-                String accNum = readStringInput("Enter Account Number (User ID): ").trim();
+                String accNum = readStringInput("Enter Account Number (User ID) [type 'exit' to cancel]: ").trim();
                 if (accNum.isEmpty()) return;
 
                 Account acc = bankService.findAccount(accNum);
@@ -235,10 +256,12 @@ public class ConsoleMenu {
             System.out.println("\nSelect Transaction Type:");
             System.out.println("1. DEPOSIT");
             System.out.println("2. WITHDRAWAL");
-            int typeChoice = readIntInput("Your choice (1-2): ");
+            System.out.println("3. Exit/Back to Search Menu");
+            int typeChoice = readIntInput("Your choice (1-3): ");
             TransactionType type = null;
             if (typeChoice == 1) type = TransactionType.DEPOSIT;
             else if (typeChoice == 2) type = TransactionType.WITHDRAWAL;
+            else if (typeChoice == 3) return;
             else {
                 System.out.println("[-] Invalid type choice.");
                 return;
@@ -252,7 +275,11 @@ public class ConsoleMenu {
             displayTransactionsList(txs, endTime - startTime);
 
         } else if (mode == 3) {
-            int month = readIntInput("Enter Month (1-12): ");
+            int month = readIntInput("Enter Month (1-12) [type 'exit' or enter 0 to cancel]: ");
+            if (month == 0) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             if (month < 1 || month > 12) {
                 System.out.println("[-] Invalid month. Must be between 1 and 12.");
                 return;
@@ -267,18 +294,27 @@ public class ConsoleMenu {
 
         } else if (mode == 4) {
             System.out.println("\n--- SEARCH BY COMBINATION ---");
-            String accNum = readStringInput("Enter Account Number (User ID) [or press Enter to skip]: ").trim();
+            String accNum = readStringInput("Enter Account Number (User ID) [type 'exit' to cancel or press Enter to skip]: ").trim();
             
             System.out.println("Select Transaction Type:");
             System.out.println("0. Skip filtering by Type");
             System.out.println("1. DEPOSIT");
             System.out.println("2. WITHDRAWAL");
-            int typeChoice = readIntInput("Your choice (0-2): ");
+            System.out.println("3. Exit/Cancel");
+            int typeChoice = readIntInput("Your choice (0-3): ");
+            if (typeChoice == 3) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             TransactionType type = null;
             if (typeChoice == 1) type = TransactionType.DEPOSIT;
             else if (typeChoice == 2) type = TransactionType.WITHDRAWAL;
 
-            int month = readIntInput("Enter Month (1-12) [or 0 to skip]: ");
+            int month = readIntInput("Enter Month (1-12) [0 to skip, -1 to exit/cancel]: ");
+            if (month == -1) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             if (month < 0 || month > 12) {
                 System.out.println("[-] Invalid month.");
                 return;
@@ -355,9 +391,8 @@ public class ConsoleMenu {
     }
 
     private void runPerformanceBenchmark() {
-        System.out.println("\n--- [7] RUN EMPIRICAL PERFORMANCE BENCHMARK ---");
-        System.out.println("Research Question (RQ): How many times faster is custom Hash Table lookup compared to Singly Linked List?");
-        System.out.println("This test runs random lookups on the active transactions database.");
+        System.out.println("\n--- [6] RUN EMPIRICAL PERFORMANCE BENCHMARK ---");
+        System.out.println("Research Question (RQ): Addressing RQ1, RQ2, and RQ3 for FPT CSD201 Assignment.");
         
         int count = bankService.getAllTransactions().length;
         if (count == 0) {
@@ -365,9 +400,9 @@ public class ConsoleMenu {
             return;
         }
 
-        int lookups = readIntInput("Enter number of search repetitions to perform: ");
+        int lookups = readIntInput("Enter number of repetitions to perform for queries (e.g. 1000) [type 'exit' or 0 to cancel]: ");
         if (lookups <= 0) {
-            System.out.println("[!] Number of lookups must be positive.");
+            System.out.println("Operation cancelled.");
             return;
         }
 
@@ -377,26 +412,7 @@ public class ConsoleMenu {
             return;
         }
 
-        System.out.println("\n====================================================");
-        System.out.println("               BENCHMARK RESULTS REPORT             ");
-        System.out.println("====================================================");
-        System.out.printf("Dataset Size (N):     %,d transactions\n", res.datasetSize);
-        System.out.printf("Number of Lookups:    %,d lookups\n", res.lookupCount);
-        System.out.println("----------------------------------------------------");
-        System.out.println("Insertion Phase:");
-        System.out.printf("  - Custom Hash Table:    %,12d ns\n", res.hashInsertTimeNs);
-        System.out.printf("  - Custom Linked List:   %,12d ns\n", res.listInsertTimeNs);
-        System.out.println("----------------------------------------------------");
-        System.out.println("Search Lookup Phase (Total search time):");
-        System.out.printf("  - Custom Hash Table:    %,12d ns (avg %,.1f ns/lookup)\n", 
-                res.hashSearchTimeNs, (double) res.hashSearchTimeNs / res.lookupCount);
-        System.out.printf("  - Custom Linked List:   %,12d ns (avg %,.1f ns/lookup)\n", 
-                res.listSearchTimeNs, (double) res.listSearchTimeNs / res.lookupCount);
-        System.out.println("----------------------------------------------------");
-        System.out.printf("Speedup Ratio:        Custom Hash Table is %.2fx FASTER\n", res.searchSpeedupRatio);
-        System.out.println("Complexity Proof:     Hash Table lookup matches O(1) average time,");
-        System.out.println("                      while Linked List matches O(n) average search time.");
-        System.out.println("====================================================");
+        BenchmarkService.printReportToConsole(res, lookups);
     }
 
     private void exitApp() {
@@ -405,10 +421,19 @@ public class ConsoleMenu {
 
     // --- Input Readers with Validation ---
 
+    private static class OperationCancelledException extends RuntimeException {
+        public OperationCancelledException() {
+            super("Operation cancelled by user.");
+        }
+    }
+
     private int readIntInput(String prompt) {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
+            if (input.equalsIgnoreCase("exit")) {
+                throw new OperationCancelledException();
+            }
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
@@ -421,6 +446,9 @@ public class ConsoleMenu {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
+            if (input.equalsIgnoreCase("exit")) {
+                throw new OperationCancelledException();
+            }
             try {
                 return Double.parseDouble(input);
             } catch (NumberFormatException e) {
@@ -431,6 +459,10 @@ public class ConsoleMenu {
 
     private String readStringInput(String prompt) {
         System.out.print(prompt);
-        return scanner.nextLine();
+        String input = scanner.nextLine().trim();
+        if (input.equalsIgnoreCase("exit")) {
+            throw new OperationCancelledException();
+        }
+        return input;
     }
 }
