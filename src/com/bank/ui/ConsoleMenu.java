@@ -37,7 +37,7 @@ public class ConsoleMenu {
         while (running) {
             printMenuHeader();
             try {
-                int choice = readIntInput("Select an option (1-7): ");
+                int choice = readIntInput("Select an option (1-8): ");
                 switch (choice) {
                     case 1:
                         viewAccounts();
@@ -46,23 +46,26 @@ public class ConsoleMenu {
                         addNewAccount();
                         break;
                     case 3:
-                        postNewTransaction();
+                        viewTransactionHistory();
                         break;
                     case 4:
-                        searchTransaction();
+                        postNewTransaction();
                         break;
                     case 5:
-                        viewAnalyticsDashboard();
+                        searchTransaction();
                         break;
                     case 6:
-                        runPerformanceBenchmark();
+                        viewAnalyticsDashboard();
                         break;
                     case 7:
+                        runPerformanceBenchmark();
+                        break;
+                    case 8:
                         exitApp();
                         running = false;
                         break;
                     default:
-                        System.out.println("\n[!] Invalid choice. Please choose a value from 1 to 7.");
+                        System.out.println("\n[!] Invalid choice. Please choose a value from 1 to 8.");
                 }
             } catch (OperationCancelledException e) {
                 System.out.println("\n[i] " + e.getMessage());
@@ -76,11 +79,12 @@ public class ConsoleMenu {
         System.out.println("====================================================");
         System.out.println("1. View Accounts & Balances");
         System.out.println("2. Add New Account");
-        System.out.println("3. Post New Transaction (Deposit/Withdrawal)");
-        System.out.println("4. Fast Lookup by Transaction ID [O(1) Hash Table]");
-        System.out.println("5. View 12-Month Cash Flow Analytics Dashboard");
-        System.out.println("6. Run Performance Benchmark (Hash Table vs. Linked List)");
-        System.out.println("7. Exit");
+        System.out.println("3. View Transaction History");
+        System.out.println("4. Post New Transaction (Deposit/Withdrawal)");
+        System.out.println("5. Fast Lookup by Transaction ID [O(1) Hash Table]");
+        System.out.println("6. View 12-Month Cash Flow Analytics Dashboard");
+        System.out.println("7. Run Performance Benchmark (Hash Table vs. Linked List)");
+        System.out.println("8. Exit");
         System.out.println("====================================================");
     }
 
@@ -120,8 +124,16 @@ public class ConsoleMenu {
         }
     }
 
+    private void viewTransactionHistory() {
+        System.out.println("\n--- [3] TRANSACTION HISTORY ---");
+        long startTime = System.nanoTime();
+        Transaction[] txs = bankService.getAllTransactions();
+        long endTime = System.nanoTime();
+        displayTransactionsList(txs, endTime - startTime);
+    }
+
     private void postNewTransaction() {
-        System.out.println("\n--- [3] POST NEW TRANSACTION ---");
+        System.out.println("\n--- [4] POST NEW TRANSACTION ---");
         String accNum = readStringInput("Enter account number [type 'exit' to cancel]: ").trim();
         Account acc = bankService.findAccount(accNum);
         if (acc == null) {
@@ -186,7 +198,7 @@ public class ConsoleMenu {
     }
 
     private void searchTransaction() {
-        System.out.println("\n--- [4] FAST TRANSACTION LOOKUP ---");
+        System.out.println("\n--- [5] FAST TRANSACTION LOOKUP ---");
         System.out.println("Select Search Mode:");
         System.out.println("1. Search By ID (Transaction ID / Account Number)");
         System.out.println("2. Search By Type (DEPOSIT / WITHDRAWAL)");
@@ -355,7 +367,7 @@ public class ConsoleMenu {
     }
 
     private void viewAnalyticsDashboard() {
-        System.out.println("\n--- [5] 12-MONTH CASH FLOW ANALYTICS DASHBOARD ---");
+        System.out.println("\n--- [6] 12-MONTH CASH FLOW ANALYTICS DASHBOARD ---");
         BankService.MonthlyReport[] reports = bankService.generateMonthlyAnalytics();
         
         System.out.printf("%-10s | %-15s | %-15s\n", 
@@ -391,7 +403,7 @@ public class ConsoleMenu {
     }
 
     private void runPerformanceBenchmark() {
-        System.out.println("\n--- [6] RUN EMPIRICAL PERFORMANCE BENCHMARK ---");
+        System.out.println("\n--- [7] RUN EMPIRICAL PERFORMANCE BENCHMARK ---");
         System.out.println("Research Question (RQ): Addressing RQ1, RQ2, and RQ3 for FPT CSD201 Assignment.");
         
         int count = bankService.getAllTransactions().length;
