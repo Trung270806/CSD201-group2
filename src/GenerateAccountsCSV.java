@@ -30,7 +30,7 @@ public class GenerateAccountsCSV {
                 double balance = 10000.0 + rand.nextDouble() * 990000.0;
                 
                 // Format decimal to 2 decimal places
-                writer.write(String.format("%s,%.2f", accNum, balance));
+                writer.write(String.format(java.util.Locale.US, "%s,%.2f", accNum, balance));
                 writer.newLine();
             }
             System.out.println("====================================================");

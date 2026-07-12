@@ -56,7 +56,7 @@ public class Transaction {
     }
 
     public String toCSV() {
-        return String.format("%s,%s,%.2f,%s,%s", id, account, amount, type.name(), time);
+        return String.format(java.util.Locale.US, "%s,%s,%.2f,%s,%s", id, account, amount, type.name(), time);
     }
 
     public static Transaction fromCSV(String csvLine) {
@@ -74,7 +74,7 @@ public class Transaction {
 
     @Override
     public String toString() {
-        return String.format("Transaction[ID: %s, Account: %s, Amount: %.2f, Type: %s, Time: %s]",
+        return String.format(java.util.Locale.US, "Transaction[ID: %s, Account: %s, Amount: %.2f, Type: %s, Time: %s]",
                 id, account, amount, type, time);
     }
 }

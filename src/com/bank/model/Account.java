@@ -39,7 +39,7 @@ public class Account {
     }
 
     public String toCSV() {
-        return String.format("%s,%.2f", accountNumber, balance);
+        return String.format(java.util.Locale.US, "%s,%.2f", accountNumber, balance);
     }
 
     public static Account fromCSV(String csvLine) {
@@ -52,6 +52,6 @@ public class Account {
 
     @Override
     public String toString() {
-        return String.format("Account[Number: %s, Balance: %.2f]", accountNumber, balance);
+        return String.format(java.util.Locale.US, "Account[Number: %s, Balance: %.2f]", accountNumber, balance);
     }
 }

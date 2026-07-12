@@ -224,7 +224,8 @@ public class ConsoleMenu {
 
             if (idChoice == 1) {
                 String txId = readStringInput("Enter Transaction ID [type 'exit' to cancel]: ").trim();
-                if (txId.isEmpty()) return;
+                if (txId.isEmpty())
+                    return;
 
                 long startTime = System.nanoTime();
                 Transaction tx = bankService.getTransaction(txId);
@@ -239,13 +240,15 @@ public class ConsoleMenu {
                     System.out.printf("Amount:      %,.2f VND\n", tx.getAmount());
                     System.out.println("Timestamp:   " + tx.getTime());
                     System.out.println("----------------------------------------------------");
-                    System.out.printf("Lookup elapsed time: %d nanoseconds (~O(1) complexity)\n", (endTime - startTime));
+                    System.out.printf("Lookup elapsed time: %d nanoseconds (~O(1) complexity)\n",
+                            (endTime - startTime));
                 } else {
                     System.out.println("[-] Transaction ID not found in the Hash Table ledger.");
                 }
             } else if (idChoice == 2) {
                 String accNum = readStringInput("Enter Account Number (User ID) [type 'exit' to cancel]: ").trim();
-                if (accNum.isEmpty()) return;
+                if (accNum.isEmpty())
+                    return;
 
                 Account acc = bankService.findAccount(accNum);
                 if (acc == null) {
@@ -271,9 +274,12 @@ public class ConsoleMenu {
             System.out.println("3. Exit/Back to Search Menu");
             int typeChoice = readIntInput("Your choice (1-3): ");
             TransactionType type = null;
-            if (typeChoice == 1) type = TransactionType.DEPOSIT;
-            else if (typeChoice == 2) type = TransactionType.WITHDRAWAL;
-            else if (typeChoice == 3) return;
+            if (typeChoice == 1)
+                type = TransactionType.DEPOSIT;
+            else if (typeChoice == 2)
+                type = TransactionType.WITHDRAWAL;
+            else if (typeChoice == 3)
+                return;
             else {
                 System.out.println("[-] Invalid type choice.");
                 return;
@@ -306,8 +312,9 @@ public class ConsoleMenu {
 
         } else if (mode == 4) {
             System.out.println("\n--- SEARCH BY COMBINATION ---");
-            String accNum = readStringInput("Enter Account Number (User ID) [type 'exit' to cancel or press Enter to skip]: ").trim();
-            
+            String accNum = readStringInput(
+                    "Enter Account Number (User ID) [type 'exit' to cancel or press Enter to skip]: ").trim();
+
             System.out.println("Select Transaction Type:");
             System.out.println("0. Skip filtering by Type");
             System.out.println("1. DEPOSIT");
@@ -319,8 +326,10 @@ public class ConsoleMenu {
                 return;
             }
             TransactionType type = null;
-            if (typeChoice == 1) type = TransactionType.DEPOSIT;
-            else if (typeChoice == 2) type = TransactionType.WITHDRAWAL;
+            if (typeChoice == 1)
+                type = TransactionType.DEPOSIT;
+            else if (typeChoice == 2)
+                type = TransactionType.WITHDRAWAL;
 
             int month = readIntInput("Enter Month (1-12) [0 to skip, -1 to exit/cancel]: ");
             if (month == -1) {
@@ -337,10 +346,13 @@ public class ConsoleMenu {
             long endTime = System.nanoTime();
 
             System.out.println("\n[+] Search Combination Results:");
-            if (accNum.length() > 0) System.out.println("    Account: " + accNum);
-            if (type != null) System.out.println("    Type:    " + type);
-            if (month > 0) System.out.println("    Month:   " + month);
-            
+            if (accNum.length() > 0)
+                System.out.println("    Account: " + accNum);
+            if (type != null)
+                System.out.println("    Type:    " + type);
+            if (month > 0)
+                System.out.println("    Month:   " + month);
+
             displayTransactionsList(txs, endTime - startTime);
 
         } else {
@@ -352,16 +364,20 @@ public class ConsoleMenu {
         if (txs == null || txs.length == 0) {
             System.out.println("No transactions matching criteria found.");
         } else {
-            System.out.println("------------------------------------------------------------------------------------------------------");
-            System.out.printf("%-25s | %-12s | %-15s | %-18s | %-20s\n", "Transaction ID", "Account ID", "Type", "Amount (VND)", "Timestamp");
-            System.out.println("------------------------------------------------------------------------------------------------------");
+            System.out.println(
+                    "------------------------------------------------------------------------------------------------------");
+            System.out.printf("%-25s | %-12s | %-15s | %-18s | %-20s\n", "Transaction ID", "Account ID", "Type",
+                    "Amount (VND)", "Timestamp");
+            System.out.println(
+                    "------------------------------------------------------------------------------------------------------");
             for (Transaction tx : txs) {
                 if (tx != null) {
                     System.out.printf("%-25s | %-12s | %-15s | %-18.2f | %-20s\n",
                             tx.getId(), tx.getAccount(), tx.getType(), tx.getAmount(), tx.getTime());
                 }
             }
-            System.out.println("------------------------------------------------------------------------------------------------------");
+            System.out.println(
+                    "------------------------------------------------------------------------------------------------------");
             System.out.printf("Retrieved %d transactions. Query elapsed time: %d nanoseconds\n", txs.length, elapsedNs);
         }
     }
@@ -369,19 +385,19 @@ public class ConsoleMenu {
     private void viewAnalyticsDashboard() {
         System.out.println("\n--- [6] 12-MONTH CASH FLOW ANALYTICS DASHBOARD ---");
         BankService.MonthlyReport[] reports = bankService.generateMonthlyAnalytics();
-        
-        System.out.printf("%-10s | %-15s | %-15s\n", 
+
+        System.out.printf("%-10s | %-15s | %-15s\n",
                 "Month", "Total Deposits", "Total Withdraws");
         System.out.println("--------------------------------------------------");
-        
+
         String[] months = {
-            "January", "February", "March", "April", "May", "June", 
-            "July", "August", "September", "October", "November", "December"
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
         };
 
         double maxVolume = -1;
         int peakMonthIdx = -1;
-        
+
         for (int i = 0; i < 12; i++) {
             BankService.MonthlyReport rep = reports[i];
             double volume = rep.depositSum + rep.withdrawalSum;
@@ -405,14 +421,16 @@ public class ConsoleMenu {
     private void runPerformanceBenchmark() {
         System.out.println("\n--- [7] RUN EMPIRICAL PERFORMANCE BENCHMARK ---");
         System.out.println("Research Question (RQ): Addressing RQ1, RQ2, and RQ3 for FPT CSD201 Assignment.");
-        
+
         int count = bankService.getAllTransactions().length;
         if (count == 0) {
-            System.out.println("[!] Active transactions ledger is empty. Please restart the application to generate data.");
+            System.out.println(
+                    "[!] Active transactions ledger is empty. Please restart the application to generate data.");
             return;
         }
 
-        int lookups = readIntInput("Enter number of repetitions to perform for queries (e.g. 1000) [type 'exit' or 0 to cancel]: ");
+        int lookups = readIntInput(
+                "Enter number of repetitions to perform for queries (e.g. 1000) [type 'exit' or 0 to cancel]: ");
         if (lookups <= 0) {
             System.out.println("Operation cancelled.");
             return;
