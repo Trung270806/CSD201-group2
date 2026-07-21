@@ -95,10 +95,52 @@ public class ConsoleMenu {
             System.out.println("No accounts found. Use Option 2 to create one, or Option 7 to generate mock data.");
             return;
         }
-        System.out.printf("%-15s | %-20s\n", "Account Number", "Current Balance (VND)");
-        System.out.println("----------------------------------------");
-        for (Account acc : list) {
-            System.out.printf("%-15s | %-20.2f\n", acc.getAccountNumber(), acc.getBalance());
+        
+        int pageSize = 50;
+        int total = list.length;
+        int totalPages = (int) Math.ceil((double) total / pageSize);
+        int currentPage = 1;
+
+        while (true) {
+            int i = (currentPage - 1) * pageSize;
+            System.out.printf("%-15s | %-20s\n", "Account Number", "Current Balance (VND)");
+            System.out.println("----------------------------------------");
+            
+            int limit = Math.min(i + pageSize, total);
+            for (int j = i; j < limit; j++) {
+                Account acc = list[j];
+                if (acc != null) {
+                    System.out.printf("%-15s | %-20.2f\n", acc.getAccountNumber(), acc.getBalance());
+                }
+            }
+            System.out.println("----------------------------------------");
+            System.out.printf("Showing %d - %d of %d accounts (Page %d/%d).\n", i + 1, limit, total, currentPage, totalPages);
+            
+            try {
+                String prompt = "Press Enter for next page, type page number to jump, or 'exit': ";
+                String input = readStringInput(prompt).trim();
+                
+                if (input.isEmpty()) {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                    } else {
+                        break; // Exit list when pressing enter on the last page
+                    }
+                } else {
+                    try {
+                        int jumpPage = Integer.parseInt(input);
+                        if (jumpPage >= 1 && jumpPage <= totalPages) {
+                            currentPage = jumpPage;
+                        } else {
+                            System.out.println("[-] Invalid page number. Must be between 1 and " + totalPages);
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("[-] Invalid input. Please enter a page number or 'exit'.");
+                    }
+                }
+            } catch (OperationCancelledException e) {
+                break;
+            }
         }
     }
 
@@ -364,21 +406,57 @@ public class ConsoleMenu {
         if (txs == null || txs.length == 0) {
             System.out.println("No transactions matching criteria found.");
         } else {
-            System.out.println(
-                    "------------------------------------------------------------------------------------------------------");
-            System.out.printf("%-25s | %-12s | %-15s | %-18s | %-20s\n", "Transaction ID", "Account ID", "Type",
-                    "Amount (VND)", "Timestamp");
-            System.out.println(
-                    "------------------------------------------------------------------------------------------------------");
-            for (Transaction tx : txs) {
-                if (tx != null) {
-                    System.out.printf("%-25s | %-12s | %-15s | %-18.2f | %-20s\n",
-                            tx.getId(), tx.getAccount(), tx.getType(), tx.getAmount(), tx.getTime());
+            int pageSize = 50;
+            int total = txs.length;
+            int totalPages = (int) Math.ceil((double) total / pageSize);
+            int currentPage = 1;
+
+            while (true) {
+                int i = (currentPage - 1) * pageSize;
+                System.out.println(
+                        "------------------------------------------------------------------------------------------------------");
+                System.out.printf("%-25s | %-12s | %-15s | %-18s | %-20s\n", "Transaction ID", "Account ID", "Type",
+                        "Amount (VND)", "Timestamp");
+                System.out.println(
+                        "------------------------------------------------------------------------------------------------------");
+                int limit = Math.min(i + pageSize, total);
+                for (int j = i; j < limit; j++) {
+                    Transaction tx = txs[j];
+                    if (tx != null) {
+                        System.out.printf("%-25s | %-12s | %-15s | %-18.2f | %-20s\n",
+                                tx.getId(), tx.getAccount(), tx.getType(), tx.getAmount(), tx.getTime());
+                    }
+                }
+                System.out.println(
+                        "------------------------------------------------------------------------------------------------------");
+                System.out.printf("Showing %d - %d of %d transactions (Page %d/%d). Query elapsed time: %d ns\n", i + 1, limit, total, currentPage, totalPages, elapsedNs);
+                
+                try {
+                    String prompt = "Press Enter for next page, type page number to jump, or 'exit': ";
+                    String input = readStringInput(prompt).trim();
+                    
+                    if (input.isEmpty()) {
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                        } else {
+                            break; // Exit list when pressing enter on the last page
+                        }
+                    } else {
+                        try {
+                            int jumpPage = Integer.parseInt(input);
+                            if (jumpPage >= 1 && jumpPage <= totalPages) {
+                                currentPage = jumpPage;
+                            } else {
+                                System.out.println("[-] Invalid page number. Must be between 1 and " + totalPages);
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("[-] Invalid input. Please enter a page number or 'exit'.");
+                        }
+                    }
+                } catch (OperationCancelledException e) {
+                    break;
                 }
             }
-            System.out.println(
-                    "------------------------------------------------------------------------------------------------------");
-            System.out.printf("Retrieved %d transactions. Query elapsed time: %d nanoseconds\n", txs.length, elapsedNs);
         }
     }
 
