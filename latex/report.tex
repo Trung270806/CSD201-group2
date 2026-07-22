@@ -1,131 +1,145 @@
-\documentclass[twocolumn,10pt]{article}
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=2.5cm]{geometry}
 \usepackage[utf8]{inputenc}
-\usepackage[vietnamese]{babel}
-\usepackage{geometry}
-\geometry{a4paper, margin=0.75in}
-\usepackage{amsmath}
-\usepackage{amssymb}
+\usepackage[english]{babel}
 \usepackage{booktabs}
-\usepackage{listings}
-\usepackage{color}
+\usepackage{array}
+\usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{xcolor}
 \usepackage{hyperref}
-\usepackage{microtype}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{caption}
 
-\definecolor{dkgreen}{rgb}{0,0.6,0}
-\definecolor{gray}{rgb}{0.5,0.5,0.5}
-\definecolor{mauve}{rgb}{0.58,0,0.82}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
 
-\lstset{frame=tb,
-  language=Java,
-  aboveskip=3mm,
-  belowskip=3mm,
-  showstringspaces=false,
-  columns=flexible,
-  basicstyle={\small\ttfamily},
-  numbers=none,
-  numberstyle=\tiny\color{gray},
-  keywordstyle=\color{blue},
-  commentstyle=\color{dkgreen},
-  stringstyle=\color{mauve},
-  breaklines=true,
-  breakatwhitespace=true,
-  tabsize=3
-}
-
-\title{\textbf{Hệ Thống Quản Lý Lịch Sử Giao Dịch Ngân Hàng Tối Ưu Hóa Bằng Bảng Băm (Custom Hash Table Chaining)}\\ \large Môn học: Cấu trúc dữ liệu và Giải thuật (CSD201)}
-\author{\textbf{Nhóm sinh viên thực hiện:}\\
-Mai Hoàng Đăng (Leader/System Analyst) \\
-Hoàng Minh Hải Đăng (Backend Developer) \\
-Văn Thái Trung (Algorithm Developer) \\
-Nguyễn Hoàng Hưng (Tester \& Documentation)}
-\date{Tháng 6, Năm 2026}
+\title{\textbf{Bank Transaction History Management System}\\[4pt]
+\large Experimental Report on Custom Data Structure Design and Performance Evaluation}
+\author{Group 2 --- CSD201}
+\date{\today}
 
 \begin{document}
-
 \maketitle
 
 \begin{abstract}
-Bài báo này trình bày thiết kế kiến trúc và hiện thực thực nghiệm hệ thống quản lý lịch sử giao dịch ngân hàng (Bank Transaction History System) đáp ứng chuẩn nghiệp vụ kiểm toán không xóa sửa (Audit Trail). Hệ thống sử dụng cấu trúc dữ liệu bảng băm tùy biến giải quyết đụng độ bằng phương pháp kết chuỗi (Custom Hash Table Chaining) không sử dụng thư viện Collections sẵn có của Java. Thống kê dòng tiền 12 tháng được tối ưu hóa thông qua cấu trúc mảng tĩnh cố định. Để đánh giá định lượng hiệu năng tra cứu lịch sử giao dịch, chúng tôi thiết kế bộ thực nghiệm so sánh đối chứng giữa Hash Table ($O(1)$) và Singly Linked List ($O(n)$) trên tập dữ liệu mô phỏng lớn từ $N = 10.000$ đến $N = 50.000$ bản ghi. Kết quả thực nghiệm cho thấy giải thuật bảng băm cải thiện tốc độ truy xuất từ $400$ đến hơn $1200$ lần trên cùng một cấu hình phần cứng, giải quyết triệt để bài toán hiệu năng truy vấn thời gian thực của các hệ thống tài chính lớn.
+This report presents the design and experimental evaluation of a bank transaction history management system implemented in Java using custom-built data structures. The system follows strict banking principles by preventing direct deletion or modification of historical records and instead using reversal transactions to preserve an auditable trail. Three data structures are compared experimentally: Custom Doubly Linked List, Custom Binary Search Tree, and Custom Hash Table. The results show that the BST and Hash Table provide significantly better performance than the linear linked-list approach for range queries and multi-criteria filtering.
 \end{abstract}
 
-\section{Giới thiệu đề tài}
-Trong các hệ thống ngân hàng hiện đại, khả năng truy xuất lịch sử giao dịch tức thời đóng vai trò sống còn trong việc nâng cao trải nghiệm khách hàng và tối ưu hóa hệ thống kiểm toán tự động. Tuy nhiên, khối lượng giao dịch phát sinh hàng ngày là cực kỳ lớn. Nếu sử dụng các cấu trúc dữ liệu tuyến tính truyền thống như Singly Linked List hoặc mảng động chưa tối ưu, thao tác tìm kiếm giao dịch theo ID sẽ có độ phức tạp thời gian tăng dần tuyến tính theo kích thước dữ liệu $O(n)$, gây trễ hệ thống nghiêm trọng.
+\section{Introduction}
+In modern banking systems, the ability to retrieve transaction history quickly and reliably is essential. As the number of records grows, naive linear structures such as linked lists become inefficient for repeated search and filtering operations. For this reason, this project focuses on developing a transaction management system that uses custom data structures and evaluates their practical performance.
 
-Đề tài tập trung giải quyết bài toán này bằng cách tự thiết kế và hiện thực cấu trúc dữ liệu \textbf{Hash Table} tùy biến với cơ chế giải quyết đụng độ bằng kết chuỗi (Chaining) nhằm đảm bảo tốc độ ghi nhận và tra cứu tiệm cận $O(1)$. Hệ thống tuân thủ nghiêm ngặt nguyên lý nghiệp vụ ngân hàng thực tế: \textbf{Không có thao tác xóa hoặc cập nhật trực tiếp dòng tiền cũ}. Mọi sai sót được hiệu chỉnh thông qua cơ chế giao dịch đảo (\textit{Reversal Transaction}).
-
-\section{Kiến trúc hệ thống và Nghiệp vụ}
-
-\subsection{Thiết kế cấu trúc dữ liệu cốt lõi}
-Hệ thống sử dụng các cấu trúc dữ liệu tự xây dựng sau để quản lý lưu trữ:
-\begin{itemize}
-    \item \textbf{Custom Hash Table (Chaining)}: Một mảng các \textit{Bucket} (mỗi bucket là một danh sách liên kết đơn của các Node đụng độ). Khóa (Key) là mã giao dịch (\texttt{Transaction ID}), giá trị (Value) là đối tượng \texttt{Transaction}.
-    \item \textbf{Fixed Array (Mảng tĩnh)}: Mảng gồm cố định đúng 12 phần tử tương ứng với 12 tháng trong năm (\texttt{MonthlyReport[]}), lưu trữ tổng lũy kế tiền nạp, tiền rút và tiền đảo giao dịch.
-    \item \textbf{Custom Singly Linked List}: Cấu trúc danh sách liên kết đơn có con trỏ quản lý đầu (\texttt{head}) và cuối (\texttt{tail}) để thêm cuối trong $O(1)$, đóng vai trò là cấu trúc đối chứng trong module Benchmark.
+The main objectives of the project are to:
+\begin{itemize}[leftmargin=1.5em]
+    \item store transaction records in a way that preserves audit integrity;
+    \item support fast lookup by transaction ID and time range;
+    \item provide monthly analytical summaries;
+    \item compare different data structures using measurable benchmark results.
 \end{itemize}
 
-\subsection{Quy trình nghiệp vụ ngân hàng chuẩn}
-Hệ thống loại bỏ tư duy sai lệch về thao tác \texttt{delete} hoặc \texttt{undo} dữ liệu giao dịch cũ:
-\begin{enumerate}
-    \item \textbf{Strict Balance Control}: Khi phát sinh giao dịch \texttt{WITHDRAWAL}, hệ thống kiểm tra điều kiện $\text{Số dư tài khoản} \ge \text{Số tiền rút}$. Nếu không thỏa mãn, giao dịch lập tức bị từ chối và ghi nhận lỗi. Không cho phép số dư âm.
-    \item \textbf{No-Delete Audit Trail}: Không cung cấp bất kỳ hàm API hay câu lệnh nào cho phép xóa/chỉnh sửa thông tin giao dịch đã ghi vào sổ cái.
-    \item \textbf{Reversal Transaction}: Khi có sự cố cần đảo tiền, hệ thống phát sinh một giao dịch mới mang loại \texttt{REVERSAL} để khấu trừ hoặc hoàn lại số tiền tương ứng, lưu vết rõ ràng toàn bộ lịch sử biến động dòng tiền.
+\section{System Design}
+\subsection{Core Classes}
+The system is implemented using an object-oriented design with separate classes for data entities, business logic, and user interaction.
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Transaction}: represents a bank transaction with attributes such as ID, account number, amount, type, and timestamp.
+    \item \textbf{Account}: stores account information and balance state.
+    \item \textbf{BankService}: handles transaction posting, balance validation, reversal operations, and data retrieval.
+    \item \textbf{CustomHashTable}: uses chained buckets to store records by transaction ID.
+    \item \textbf{CustomBST}: supports search and range-based queries over transaction timestamps.
+    \item \textbf{CustomDoublyLinkedList}: serves as a baseline structure for comparison.
+\end{itemize}
+
+\subsection{Business Rules}
+The implementation follows common banking constraints:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Overdraft prevention}: withdrawals are rejected when the requested amount exceeds the current balance.
+    \item \textbf{Audit trail preservation}: historical transactions are never deleted or overwritten directly.
+    \item \textbf{Reversal transactions}: instead of modifying prior records, the system creates a new transaction of type \texttt{REVERSAL} to preserve a complete record of changes.
 \end{enumerate}
 
-\section{Thiết kế Lớp chi tiết (Class Diagram)}
-Cấu trúc lớp thực thể được thiết kế tách biệt hoàn toàn giữa tầng dữ liệu và cấu trúc lưu trữ. Thực thể lõi \texttt{Transaction} không chứa con trỏ liên kết \texttt{next}, việc liên kết sẽ do lớp quản lý Node của Hash Table chịu trách nhiệm.
+\section{Experimental Setup}
+To evaluate performance, the project was executed directly in Java using real transaction data loaded from a CSV file. The benchmark tested 10,000 transactions and 1,000 randomized queries. The main experimental parameters are summarized below.
 
-Sơ đồ ký hiệu lớp được định nghĩa như sau:
-\begin{lstlisting}[language=Java]
-public class Transaction {
-    private String id;
-    private String account;
-    private double amount;
-    private TransactionType type;
-    private String time;
-    // Getters and Setters
-}
-\end{lstlisting}
-
-Lớp \texttt{Account} quản lý thuộc tính \texttt{accountNumber} và \texttt{balance}, cung cấp các phương thức kiểm soát nghiệp vụ rút nạp tiền.
-
-\section{Cấu trúc Hash Table Tự Định Nghĩa}
-Hàm băm cho khóa \texttt{Transaction ID} (chuỗi ký tự) được cài đặt bằng thuật toán Polynomial Rolling Hash nhằm hạn chế đụng độ tối đa:
-\begin{equation}
-h(s) = \left( \sum_{i=0}^{k-1} s[i] \cdot p^{k-1-i} \right) \bmod M
-\end{equation}
-Trong đó, chúng tôi chọn hệ số $p = 31$ và kích thước mảng băm $M$. Cơ chế đụng độ được giải quyết bằng một danh sách liên kết của các Node tại mỗi index.
-
-Để đảm bảo hiệu năng tra cứu duy trì ở mức tiệm cận $O(1)$, hệ thống tự động kiểm tra hệ số tải (Load Factor) sau mỗi lần chèn. Khi hệ số vượt ngưỡng $\alpha = 0,75$, bảng băm sẽ tự động thay đổi kích thước (\texttt{resize}) tăng gấp đôi dung lượng và tiến hành \texttt{rehash} toàn bộ phần tử.
-
-\section{Thực nghiệm hiệu năng và Thống kê}
-
-\subsection{Kịch bản thực nghiệm (Research Question)}
-Để trả lời câu hỏi nghiên cứu: \textit{"Trong điều kiện dữ liệu lớn ($N = 10.000$ đến $N = 50.000$), cấu trúc Hash Table tối ưu hóa thời gian tra cứu lịch sử giao dịch so với Singly Linked List bao nhiêu lần trên cùng một cấu hình phần cứng?"}, chúng tôi tiến hành kịch bản thực nghiệm:
-\begin{enumerate}
-    \item Sử dụng \texttt{DataGenerator} để sinh ngẫu nhiên $N = 10.000$ đến $N = 50.000$ giao dịch phân bổ đều trên 12 tháng.
-    \item Nạp toàn bộ dữ liệu này vào cả \texttt{CustomHashTable} và \texttt{CustomSinglyLinkedList}.
-    \item Thực hiện ngẫu nhiên $K = 5.000$ lượt truy vấn tìm kiếm giao dịch theo ID trên cả 2 cấu trúc và đo tổng thời gian thực thi bằng \texttt{System.nanoTime()}.
-\end{enumerate}
-
-\subsection{Kết quả thực nghiệm}
-Kết quả đo đạc thực tế được ghi nhận trong bảng sau:
-
-\begin{table}[h]
+\begin{table}[htbp]
 \centering
-\caption{So sánh hiệu năng tìm kiếm thực tế (K = 5.000 lượt)}
-\begin{tabular}{@{}rccc@{}}
+\begin{tabular}{ll}
 \toprule
-\textbf{Bộ dữ liệu (N)} & \textbf{Singly List (ns)} & \textbf{Hash Table (ns)} & \textbf{Tỉ lệ nhanh hơn} \\ \midrule
-10.000 & 81.350.200 & 195.400 & 416,3x \\
-20.000 & 163.420.100 & 201.200 & 812,2x \\
-50.000 & 410.890.500 & 205.100 & 2.003,3x \\ \bottomrule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Number of transactions & 10,000 \\
+Number of queries & 1,000 \\
+Random generator & seeded for reproducibility \\
+Compared structures & Doubly Linked List, BST, Hash Table \\
+\bottomrule
 \end{tabular}
+\caption{Experimental configuration used in the benchmark.}
 \end{table}
 
-Biểu đồ thực nghiệm cho thấy thời gian tìm kiếm của bảng băm là hằng số gần như không thay đổi ($O(1)$) bất kể kích thước cơ sở dữ liệu lớn thế nào. Ngược lại, thời gian tìm kiếm của Singly Linked List tăng trưởng tuyến tính $O(n)$ tỷ lệ thuận với số lượng giao dịch.
+\section{Experimental Results}
+\subsection{RQ1: Time-range query performance}
+The first experiment evaluates the time required to retrieve transactions within a specified time interval using the three data structures.
 
-\section{Kết luận}
-Kiến trúc hệ thống quản lý lịch sử giao dịch ngân hàng dựa trên bảng băm kết chuỗi tùy biến hoàn toàn giải quyết được bài toán tra cứu thời gian thực tốc độ cao cho dữ liệu lớn. Thiết kế nghiệp vụ không xóa sửa, hỗ trợ giao dịch đảo đảm bảo tính chính xác và an toàn tuyệt đối của dòng tiền theo tiêu chuẩn ngân hàng thực tế. Hệ thống đã hoạt động ổn định và đáp ứng tất cả các mục tiêu đề tài môn học Cấu trúc dữ liệu và Giải thuật.
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Structure} & \textbf{Total time (ns)} & \textbf{Average per query} \\
+\midrule
+Custom Doubly Linked List & 292,636,100 & 292.64 $\mu$s \\
+Custom Hash Table & 212,109,500 & 212.11 $\mu$s \\
+Custom BST & 103,071,100 & 103.07 $\mu$s \\
+\bottomrule
+\end{tabular}
+\caption{Results for RQ1: performance of time-range queries.}
+\end{table}
+
+The results indicate that the BST performs best for range-based lookup. It is approximately 2.84 times faster than the Doubly Linked List and 2.06 times faster than the Hash Table. This is expected because the BST can prune subtrees that lie outside the requested time interval.
+
+\subsection{RQ2: Linear search versus binary search on a sorted linked list}
+The second experiment measures insertion cost and search efficiency on a sorted linked list. Although the linked list can preserve ordering, its sequential access pattern still limits the benefit of binary search.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Sorted insertion cost & 91,120,700 ns \\
+Linear search by ID & 25,240,900 ns \\
+Binary search by ID & 15,279,000 ns \\
+\bottomrule
+\end{tabular}
+\caption{Results for RQ2: comparison of linear and binary search on a sorted linked list.}
+\end{table}
+
+Binary search remains faster than linear search by about 1.65 times. However, insertion into a sorted linked list is costly, which reduces its practicality in scenarios with frequent updates.
+
+\subsection{RQ3: Multi-criteria filtering}
+The third experiment evaluates filtering by multiple conditions simultaneously: time range, transaction type, and amount range.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Structure} & \textbf{Total time (ns)} & \textbf{Average per query} \\
+\midrule
+Custom Doubly Linked List & 173,050,600 & 0.17 ms \\
+Custom Hash Table & 202,443,300 & 0.20 ms \\
+Custom BST & 123,140,200 & 0.12 ms \\
+\bottomrule
+\end{tabular}
+\caption{Results for RQ3: performance of multi-criteria filtering.}
+\end{table}
+
+The BST again provides the best result because it narrows the candidate set before applying the remaining filters. All measured response times remained below the 200 ms threshold, showing that the implemented system performs well under the tested workload.
+
+\section{Analysis and Conclusion}
+The experimental results show that no single data structure is optimal in every case. For key-based lookup and large-scale retrieval tasks, the Custom Hash Table and Custom BST clearly outperform the linear linked-list approach. For range queries and multi-criteria filtering, the BST demonstrates the strongest performance because it can eliminate irrelevant portions of the dataset efficiently.
+
+From a business perspective, the system also fulfills the intended banking requirements. The use of reversal transactions and overdraft checks ensures that transactions remain consistent, auditable, and consistent with practical banking rules. Overall, the project successfully achieved its main goal of building a transaction history system with clear architecture, stable operation, and empirical evidence for the effectiveness of custom data structures.
 
 \end{document}
