@@ -33,7 +33,7 @@ public class DataGenerator {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(accountsPath))) {
             for (int i = 0; i < accountCount; i++) {
                 String accNum = String.format("ACC%06d", 100000 + i);
-                double balance = 50000.0 + rand.nextDouble() * 50000.0; // Starting balance between 50k and 100k
+                double balance = 1000000.0 + rand.nextDouble() * 19000000.0; // Starting balance between 1M and 20M VND
                 accounts[i] = new Account(accNum, balance);
                 writer.write(accounts[i].toCSV());
                 writer.newLine();
@@ -58,29 +58,29 @@ public class DataGenerator {
                 double amount;
                 if (typeRand < 0.65) {
                     type = TransactionType.DEPOSIT;
-                    amount = 500.0 + rand.nextDouble() * 4500.0; // deposit between 500 and 5000
+                    amount = 100000.0 + rand.nextDouble() * 1900000.0; // deposit between 100k and 2M VND
                     account.deposit(amount);
                 } else if (typeRand < 0.95) {
                     type = TransactionType.WITHDRAWAL;
-                    amount = 100.0 + rand.nextDouble() * 2000.0; // withdraw between 100 and 2000
+                    amount = 50000.0 + rand.nextDouble() * 950000.0; // withdraw between 50k and 1M VND
                     // Check balance to keep mock state consistent
                     if (account.getBalance() >= amount) {
                         account.withdraw(amount);
                     } else {
                         // Fallback to deposit if withdrawal would empty account
                         type = TransactionType.DEPOSIT;
-                        amount = 500.0 + rand.nextDouble() * 4500.0;
+                        amount = 100000.0 + rand.nextDouble() * 1900000.0;
                         account.deposit(amount);
                     }
                 } else {
                     type = TransactionType.REVERSAL;
-                    amount = 100.0 + rand.nextDouble() * 1000.0; // reversal amount
+                    amount = 50000.0 + rand.nextDouble() * 450000.0; // reversal amount between 50k and 500k VND
                     // Check balance constraint just in case it behaves like debit
                     if (account.getBalance() >= amount) {
                         account.withdraw(amount);
                     } else {
                         type = TransactionType.DEPOSIT;
-                        amount = 500.0 + rand.nextDouble() * 4500.0;
+                        amount = 100000.0 + rand.nextDouble() * 1900000.0;
                         account.deposit(amount);
                     }
                 }

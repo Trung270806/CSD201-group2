@@ -25,15 +25,19 @@ public class BankService {
 
     // --- Account Management ---
 
-    public boolean addAccount(String accNum, double initialBalance) {
+    public boolean addAccount(String accNum, String accountName, double initialBalance) {
         if (findAccount(accNum) != null) {
             return false; // Account already exists
         }
         if (accountCount >= MAX_ACCOUNTS) {
             return false; // Reach capacity
         }
-        accounts[accountCount++] = new Account(accNum, initialBalance);
+        accounts[accountCount++] = new Account(accNum, accountName, initialBalance);
         return true;
+    }
+
+    public boolean addAccount(String accNum, double initialBalance) {
+        return addAccount(accNum, null, initialBalance);
     }
 
     public Account findAccount(String accNum) {

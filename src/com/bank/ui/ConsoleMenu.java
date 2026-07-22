@@ -103,17 +103,17 @@ public class ConsoleMenu {
 
         while (true) {
             int i = (currentPage - 1) * pageSize;
-            System.out.printf("%-15s | %-20s\n", "Account Number", "Current Balance (VND)");
-            System.out.println("----------------------------------------");
+            System.out.printf("%-15s | %-25s | %-20s\n", "Account Number", "Account Name", "Current Balance (VND)");
+            System.out.println("------------------------------------------------------------------");
             
             int limit = Math.min(i + pageSize, total);
             for (int j = i; j < limit; j++) {
                 Account acc = list[j];
                 if (acc != null) {
-                    System.out.printf("%-15s | %-20.2f\n", acc.getAccountNumber(), acc.getBalance());
+                    System.out.printf("%-15s | %-25s | %-20d\n", acc.getAccountNumber(), acc.getAccountName(), Math.round(acc.getBalance()));
                 }
             }
-            System.out.println("----------------------------------------");
+            System.out.println("------------------------------------------------------------------");
             System.out.printf("Showing %d - %d of %d accounts (Page %d/%d).\n", i + 1, limit, total, currentPage, totalPages);
             
             try {
@@ -151,15 +151,18 @@ public class ConsoleMenu {
             System.out.println("[!] Account number cannot be empty.");
             return;
         }
+        String accName = readStringInput("Enter account holder name (press Enter to auto-generate): ").trim();
         double balance = readDoubleInput("Enter initial balance [type 'exit' to cancel]: ");
         if (balance < 0) {
             System.out.println("[!] Initial balance cannot be negative.");
             return;
         }
 
-        boolean success = bankService.addAccount(accNum, balance);
+        boolean success = bankService.addAccount(accNum, accName.isEmpty() ? null : accName, balance);
         if (success) {
-            System.out.printf("[+] Account %s successfully created.\n", accNum);
+            Account created = bankService.findAccount(accNum);
+            String nameDisp = (created != null) ? created.getAccountName() : accName;
+            System.out.printf("[+] Account %s (%s) successfully created.\n", accNum, nameDisp);
             bankService.saveToCSV(accountsPath, transactionsPath);
         } else {
             System.out.println("[!] Failed to create account. It might already exist or system is at capacity.");
@@ -211,7 +214,7 @@ public class ConsoleMenu {
             System.out.println("\n[?] Confirm transaction details:");
             System.out.println("    Account: " + accNum);
             System.out.println("    Type:    " + type);
-            System.out.printf("    Amount:  %,.2f VND\n", amount);
+            System.out.printf("    Amount:  %d VND\n", Math.round(amount));
             System.out.println("------------------------------------");
             System.out.println("1. Confirm transaction");
             System.out.println("2. Back to type selection");
@@ -222,7 +225,7 @@ public class ConsoleMenu {
                 String result = bankService.postTransaction(accNum, amount, type);
                 if (result.startsWith("SUCCESS")) {
                     System.out.println("[+] " + result);
-                    System.out.println("New Account Balance: " + acc.getBalance());
+                    System.out.printf("New Account Balance: %d VND\n", Math.round(acc.getBalance()));
                     bankService.saveToCSV(accountsPath, transactionsPath);
                 } else {
                     System.out.println("[-] " + result);
@@ -279,7 +282,7 @@ public class ConsoleMenu {
                     System.out.println("ID:          " + tx.getId());
                     System.out.println("Account:     " + tx.getAccount());
                     System.out.println("Type:        " + tx.getType());
-                    System.out.printf("Amount:      %,.2f VND\n", tx.getAmount());
+                    System.out.printf("Amount:      %d VND\n", Math.round(tx.getAmount()));
                     System.out.println("Timestamp:   " + tx.getTime());
                     System.out.println("----------------------------------------------------");
                     System.out.printf("Lookup elapsed time: %d nanoseconds (~O(1) complexity)\n",
@@ -303,7 +306,7 @@ public class ConsoleMenu {
                 long endTime = System.nanoTime();
 
                 System.out.println("\n[+] Transactions for Account: " + accNum);
-                System.out.printf("Current Balance: %,.2f VND\n", acc.getBalance());
+                System.out.printf("Current Balance: %d VND\n", Math.round(acc.getBalance()));
                 displayTransactionsList(txs, endTime - startTime);
             } else {
                 System.out.println("[-] Invalid choice.");
@@ -423,8 +426,8 @@ public class ConsoleMenu {
                 for (int j = i; j < limit; j++) {
                     Transaction tx = txs[j];
                     if (tx != null) {
-                        System.out.printf("%-25s | %-12s | %-15s | %-18.2f | %-20s\n",
-                                tx.getId(), tx.getAccount(), tx.getType(), tx.getAmount(), tx.getTime());
+                        System.out.printf("%-25s | %-12s | %-15s | %-18d | %-20s\n",
+                                tx.getId(), tx.getAccount(), tx.getType(), Math.round(tx.getAmount()), tx.getTime());
                     }
                 }
                 System.out.println(
@@ -464,9 +467,9 @@ public class ConsoleMenu {
         System.out.println("\n--- [6] 12-MONTH CASH FLOW ANALYTICS DASHBOARD ---");
         BankService.MonthlyReport[] reports = bankService.generateMonthlyAnalytics();
 
-        System.out.printf("%-10s | %-15s | %-15s\n",
-                "Month", "Total Deposits", "Total Withdraws");
-        System.out.println("--------------------------------------------------");
+        System.out.printf("%-12s | %-22s | %-22s\n",
+                "Month", "Total Deposits (VND)", "Total Withdraws (VND)");
+        System.out.println("-------------------------------------------------------------------");
 
         String[] months = {
                 "January", "February", "March", "April", "May", "June",
@@ -483,14 +486,14 @@ public class ConsoleMenu {
                 maxVolume = volume;
                 peakMonthIdx = i;
             }
-            System.out.printf("%-10s | %-15.2f | %-15.2f\n",
-                    months[i], rep.depositSum, rep.withdrawalSum);
+            System.out.printf("%-12s | %-22d | %-22d\n",
+                    months[i], Math.round(rep.depositSum), Math.round(rep.withdrawalSum));
         }
 
-        System.out.println("--------------------------------------------------");
+        System.out.println("-------------------------------------------------------------------");
         if (peakMonthIdx != -1 && maxVolume > 0) {
-            System.out.printf("Financial Insight: Peak transaction month is %s with total volume of %.2f VND.\n",
-                    months[peakMonthIdx], maxVolume);
+            System.out.printf("Financial Insight: Peak transaction month is %s with total volume of %d VND.\n",
+                    months[peakMonthIdx], Math.round(maxVolume));
         } else {
             System.out.println("Financial Insight: No transaction activity has been recorded yet.");
         }

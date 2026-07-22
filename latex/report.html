@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>07. Bank Transaction History System - Experimental Report</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2.5cm;
+  }
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #000;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  h1.title {
+    text-align: center;
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  h2.subtitle {
+    text-align: center;
+    font-size: 13pt;
+    font-weight: normal;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+  .author-date {
+    text-align: center;
+    font-size: 11pt;
+    margin-bottom: 24px;
+  }
+  .abstract {
+    margin: 0 30px 24px 30px;
+    font-size: 10.5pt;
+    text-align: justify;
+  }
+  .abstract-title {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  h2.section-header {
+    font-size: 13pt;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 2px;
+  }
+  h3.subsection-header {
+    font-size: 11pt;
+    font-weight: bold;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  p {
+    text-align: justify;
+    margin-top: 6px;
+    margin-bottom: 8px;
+    text-indent: 1.5em;
+  }
+  p.no-indent {
+    text-indent: 0;
+  }
+  ol, ul {
+    margin-top: 4px;
+    margin-bottom: 8px;
+    padding-left: 24px;
+  }
+  li {
+    margin-bottom: 4px;
+    text-align: justify;
+  }
+  table.latex-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 10pt;
+  }
+  table.latex-table th {
+    border-top: 2px solid #000;
+    border-bottom: 1px solid #000;
+    padding: 6px 8px;
+    text-align: left;
+  }
+  table.latex-table td {
+    padding: 5px 8px;
+    text-align: left;
+  }
+  table.latex-table tr.bottom-row td {
+    border-bottom: 2px solid #000;
+  }
+  .caption {
+    font-size: 9.5pt;
+    text-align: center;
+    margin-top: 4px;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+  code, .code-inline {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9.5pt;
+    background-color: #f4f4f4;
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+  .compliant {
+    color: #008000;
+    font-weight: bold;
+  }
+  .highlight-fast {
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h1 class="title">07. Bank Transaction History System</h1>
+<h2 class="subtitle">Experimental Report: Real-Time Transaction Management and Data Structure Performance Evaluation</h2>
+<div class="author-date">
+  <strong>Group 07 --- CSD201</strong><br>
+  July 22, 2026
+</div>
+
+<div class="abstract">
+  <div class="abstract-title">Abstract</div>
+  This report presents empirical performance evaluation and architectural analysis for the <em>Bank Transaction History System</em> (Group 07, CSD201 Project). The system models real-time banking operations under strict compliance rules: prohibiting direct record deletion or modification (preserving auditability via <code>REVERSAL</code> transactions) and enforcing strict overdraft prevention. We experimentally investigate three core Research Questions (RQ1, RQ2, RQ3) comparing four custom-implemented data structures---Doubly Linked List, Binary Search Tree (BST), Hash Table, and Sorted Linked List---on a scale of 100,000 transaction records across 1,000 randomized queries. Experimental results demonstrate that BST pruning provides superior performance for range queries (2.84&times; faster than Doubly Linked List), binary search on linked lists fails to achieve logarithmic efficiency due to pointer traversal overhead and O(N<sup>2</sup>) insertion costs, and multi-criteria filtering easily satisfies the 200&nbsp;ms response time SLA threshold (achieving &lt; 0.20&nbsp;ms per query).
+</div>
+
+<h2 class="section-header">1. Introduction</h2>
+<p>Modern core banking systems handle millions of daily transactions, demanding both strict auditing integrity and sub-millisecond query performance. In accordance with banking regulations, historical ledgers must be immutable: transaction deletion or modification is strictly prohibited, requiring corrective actions to be recorded as distinct <code>REVERSAL</code> transactions. Furthermore, account balances must strictly prevent unauthorized overdrafts during withdrawal operations.</p>
+
+<p>As transaction volume scales to 100,000 records and beyond, linear storage mechanisms become performance bottlenecks. This experimental study addresses three key Research Questions (RQs) to guide data structure selection for real-time transaction management:</p>
+
+<ol>
+  <li><strong>Research Question 1 (RQ1):</strong> Does a Doubly Linked List, Binary Search Tree (BST), or Hash Table yield the fastest execution time when querying transaction history by timestamp range over 100,000 records --- measured across 1,000 randomized range queries?</li>
+  <li><strong>Research Question 2 (RQ2):</strong> Is Binary Search superior to Linear Search when searching for transactions by ID on a Sorted Linked List, and does the high cost of maintaining sorted order upon new insertion negate any potential search advantage?</li>
+  <li><strong>Research Question 3 (RQ3):</strong> Which data structure most efficiently supports multi-criteria filtering (date range + transaction type + amount range) simultaneously while maintaining a strict response time SLA under 200&nbsp;ms on a 100,000-record dataset?</li>
+</ol>
+
+<p>To ensure stability and eliminate random execution noise, all experiments are conducted with a fixed random seed and pre-warmed JVM execution cycles.</p>
+
+<h2 class="section-header">2. Experimental Setup</h2>
+<p>The experimental environment evaluates custom Java implementations of data structures without relying on built-in Java Collection utilities (<code>java.util.LinkedList</code>, <code>java.util.HashMap</code>, etc.). The shared simulation parameters are detailed in Table 1.</p>
+
+<table class="latex-table">
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Total Transaction Dataset Size (N)</td><td>100,000 records</td></tr>
+    <tr><td>Active Bank Accounts</td><td>10,000 accounts</td></tr>
+    <tr><td>Benchmark Repetitions (Q)</td><td>1,000 randomized queries</td></tr>
+    <tr><td>JVM Warmup Runs</td><td>500 query pre-warm cycles</td></tr>
+    <tr><td>Query SLA Response Threshold</td><td>&lt; 200 ms per query</td></tr>
+    <tr><td>Audit Trail Integrity</td><td>Immutable log (Reversal transactions only)</td></tr>
+    <tr><td>Overdraft Prevention</td><td>Strict balance validation (balance &ge; amount)</td></tr>
+    <tr class="bottom-row"><td>Compared Data Structures</td><td>Doubly Linked List, Hash Table, BST, Sorted List</td></tr>
+  </tbody>
+</table>
+<div class="caption">Table 1: Experimental setup and benchmarking configuration.</div>
+
+<h2 class="section-header">3. RQ1: Timestamp Range Query Performance</h2>
+
+<h3 class="subsection-header">3.1 Experimental Design and Methodology</h3>
+<p>Range queries select all transactions occurring within a specified time window [t<sub>start</sub>, t<sub>end</sub>]. We measure the total execution time for 1,000 range queries on a dataset of 100,000 transactions across three data structures:</p>
+<ul>
+  <li><strong>Custom Doubly Linked List:</strong> Traverses all N = 100,000 nodes sequentially from head to tail (O(N) lookup).</li>
+  <li><strong>Custom Hash Table:</strong> Performs a linear scan over internal bucket arrays to evaluate timestamp constraints for all entries (O(N) scan).</li>
+  <li><strong>Custom Binary Search Tree (BST):</strong> Nodes are ordered by timestamp string. Range retrieval uses subtree pruning (O(log N + k)), skipping branches whose subtrees fall entirely outside [t<sub>start</sub>, t<sub>end</sub>].</li>
+</ul>
+
+<h3 class="subsection-header">3.2 Results --- Range Query Performance</h3>
+
+<table class="latex-table">
+  <thead>
+    <tr>
+      <th>Data Structure</th>
+      <th>Total Time (ns)</th>
+      <th>Avg Time / Query (&mu;s)</th>
+      <th>Speedup vs. DLL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Custom Doubly Linked List</td><td>292,636,100</td><td>292.64 &mu;s</td><td>1.00&times; (Baseline)</td></tr>
+    <tr><td>Custom Hash Table</td><td>212,109,500</td><td>212.11 &mu;s</td><td>1.38&times; faster</td></tr>
+    <tr class="bottom-row"><td>Custom Binary Search Tree (BST)</td><td>103,071,100</td><td>103.07 &mu;s</td><td><strong>2.84&times; faster</strong></td></tr>
+  </tbody>
+</table>
+<div class="caption">Table 2: RQ1 Empirical Benchmark Results (100,000 records, 1,000 range queries).</div>
+
+<h3 class="subsection-header">3.3 Analysis</h3>
+<p>As demonstrated in Table 2, the Custom BST achieves the fastest execution time, completing 1,000 range queries in 103.07 ms (103.07 &mu;s per query). This represents a <strong>2.84&times; speedup</strong> over the Doubly Linked List and a <strong>2.06&times; speedup</strong> over the Hash Table.</p>
+
+<p>The mathematical basis for this performance gap lies in the algorithmic structural properties:</p>
+<ol>
+  <li><strong>Hash Table Limitations:</strong> Although a Hash Table provides O(1) expected time for point lookups by transaction ID, hash functions destroy temporal ordering. Consequently, answering range queries requires iterating through all N elements across all hash buckets (O(N) complexity).</li>
+  <li><strong>BST Pruning Advantage:</strong> Because the BST maintains key order based on transaction timestamps, range traversal prunes subtrees where node values are strictly less than t<sub>start</sub> (ignoring left subtrees) or strictly greater than t<sub>end</sub> (ignoring right subtrees). This restricts traversal to relevant nodes (O(log N + k)), dramatically reducing CPU comparison cycles.</li>
+</ol>
+
+<h3 class="subsection-header">3.4 Conclusion for RQ1</h3>
+<p>For time-range transaction history queries over 100,000 records, the <strong>Binary Search Tree (BST)</strong> is the optimal data structure, outperforming both Hash Tables and Doubly Linked Lists due to subtree range pruning.</p>
+
+<h2 class="section-header">4. RQ2: Binary Search vs. Linear Search on Sorted Linked List</h2>
+
+<h3 class="subsection-header">4.1 Experimental Design and Hypotheses</h3>
+<p>RQ2 examines whether maintaining a sorted linked list enables efficient binary search by transaction ID. We test two specific hypotheses:</p>
+<ul>
+  <li><strong>Search Efficiency Hypothesis:</strong> Does Binary Search achieve superior lookup times compared to Linear Search on a sequential linked list?</li>
+  <li><strong>Insertion Cost Hypothesis:</strong> Does the cumulative O(N<sup>2</sup>) cost of sorted insertion negate any search performance advantage?</li>
+</ul>
+<p>To measure insertion overhead accurately without CPU freeze, sorted insertion performance is evaluated on N = 5,000 records, followed by 1,000 transaction ID lookup queries.</p>
+
+<h3 class="subsection-header">4.2 Results --- Sorted Linked List Performance</h3>
+
+<table class="latex-table">
+  <thead>
+    <tr>
+      <th>Operation / Search Method</th>
+      <th>Total Execution Time (ns)</th>
+      <th>Avg Time per Op (&mu;s)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Sorted Insertion Cost (O(N<sup>2</sup>) total)</td><td>91,120,700 ns</td><td>18.22 &mu;s / insert</td></tr>
+    <tr><td>Linear Search by Transaction ID</td><td>25,240,900 ns</td><td>25.24 &mu;s / lookup</td></tr>
+    <tr class="bottom-row"><td>Binary Search on Linked List</td><td>15,279,000 ns</td><td>15.28 &mu;s / lookup</td></tr>
+  </tbody>
+</table>
+<div class="caption">Table 3: RQ2 Benchmark Results on Sorted Linked List (N = 5,000, 1,000 queries).</div>
+
+<h3 class="subsection-header">4.3 Analysis</h3>
+<p>While Binary Search appears marginally faster than Linear Search per lookup (15.28 &mu;s vs 25.24 &mu;s), the theoretical O(log N) divide-and-conquer advantage is fundamentally undermined by the linked list structure:</p>
+<ol>
+  <li><strong>Pointer Traversal Overhead:</strong> Unlike contiguous arrays offering O(1) random indexing, locating the midpoint node in a linked list requires traversing N/2 pointers (O(N) node hops). As a result, Binary Search on a linked list incurs O(N) overall time complexity per search.</li>
+  <li><strong>Dominant Insertion Overhead:</strong> Maintaining sorted order during record ingestion requires comparing new transactions against existing nodes, resulting in O(N<sup>2</sup>) cumulative insertion time (91.12 ms for 5,000 records). In dynamic banking environments with frequent real-time transactions, this massive insertion penalty completely negates the minor lookup difference.</li>
+</ol>
+
+<h3 class="subsection-header">4.4 Conclusion for RQ2</h3>
+<p>Binary Search on a Sorted Linked List is <strong>inefficient and impractical</strong>. Pointer traversal prevents true O(log N) lookup scaling, and the severe O(N<sup>2</sup>) insertion overhead destroys operational feasibility. For ID lookups, a chained Hash Table (O(1) expected lookup and O(1) insertion) should be used instead.</p>
+
+<h2 class="section-header">5. RQ3: Multi-Criteria Filtering and SLA Compliance</h2>
+
+<h3 class="subsection-header">5.1 Experimental Design and Hypotheses</h3>
+<p>Core banking dashboards require multi-criteria filtering where queries specify three criteria simultaneously:</p>
+<ol>
+  <li>Date interval [t<sub>start</sub>, t<sub>end</sub>]</li>
+  <li>Transaction Type (<code>DEPOSIT</code> or <code>WITHDRAWAL</code>)</li>
+  <li>Amount range [amount<sub>min</sub>, amount<sub>max</sub>]</li>
+</ol>
+<p>We evaluate whether candidate data structures can process multi-criteria queries across 100,000 records while maintaining a strict Service Level Agreement (SLA) threshold of <strong>&lt; 200 ms per query</strong>.</p>
+
+<h3 class="subsection-header">5.2 Results --- Multi-Criteria Benchmark and SLA Verification</h3>
+
+<table class="latex-table">
+  <thead>
+    <tr>
+      <th>Data Structure</th>
+      <th>Total Time (ns)</th>
+      <th>Avg Time / Query (ms)</th>
+      <th>SLA Compliance (&lt; 200 ms)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Custom Doubly Linked List</td><td>173,050,600</td><td>0.173 ms</td><td class="compliant">[OK] COMPLIANT</td></tr>
+    <tr><td>Custom Hash Table</td><td>202,443,300</td><td>0.202 ms</td><td class="compliant">[OK] COMPLIANT</td></tr>
+    <tr class="bottom-row"><td>Custom BST (Pruning + Filtering)</td><td>123,140,200</td><td><strong>0.123 ms</strong></td><td class="compliant">[OK] COMPLIANT</td></tr>
+  </tbody>
+</table>
+<div class="caption">Table 4: RQ3 Multi-Criteria Filtering Benchmark and 200 ms SLA Verification (N = 100,000, 1,000 queries).</div>
+
+<h3 class="subsection-header">5.3 Analysis</h3>
+<p>All three data structures comfortably pass the 200 ms SLA requirement by a substantial margin:</p>
+<ul>
+  <li><strong>Custom BST Performance:</strong> Achieves the fastest filtering time at <strong>0.123 ms per query</strong> (123.14 ms total for 1,000 queries). The BST leverages temporal pruning to first isolate a small candidate subset of matching dates, then evaluates Type and Amount bounds only on that filtered subset.</li>
+  <li><strong>Doubly Linked List &amp; Hash Table:</strong> Achieve 0.173 ms and 0.202 ms per query respectively. Even under full linear scans over 100,000 records, modern in-memory RAM execution speeds keep latency well below 1 ms.</li>
+  <li><strong>SLA Margin:</strong> The worst average query latency (0.202 ms) is nearly <strong>1,000&times; faster</strong> than the 200 ms threshold, confirming robust system performance under heavy query workloads.</li>
+</ul>
+
+<h3 class="subsection-header">5.4 Conclusion for RQ3</h3>
+<p>The <strong>Custom BST</strong> is the most effective data structure for multi-criteria transaction filtering. All evaluated structures strictly comply with the 200 ms SLA requirement for 100,000 records.</p>
+
+<h2 class="section-header">6. Overall Conclusions</h2>
+<ol>
+  <li><strong>Range Queries (RQ1):</strong> The <strong>Binary Search Tree (BST)</strong> is the optimal structure for timestamp range searches (2.84&times; faster than Doubly Linked List), as key ordering enables efficient subtree pruning.</li>
+  <li><strong>Sorted Linked List Lookups (RQ2):</strong> Binary search on linked lists fails to achieve logarithmic performance due to sequential pointer traversals. The O(N<sup>2</sup>) insertion cost further renders sorted linked lists impractical for real-time transaction ingestion.</li>
+  <li><strong>Multi-Criteria Filtering &amp; SLA (RQ3):</strong> Combining BST date pruning with secondary criteria filtering yields the lowest latency (0.123 ms per query). All structures successfully satisfy the 200 ms SLA response threshold on 100,000 transaction records.</li>
+</ol>
+
+</body>
+</html>
