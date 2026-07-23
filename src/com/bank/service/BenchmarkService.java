@@ -6,7 +6,6 @@ import com.bank.datastructure.CustomHashTable;
 import com.bank.datastructure.CustomSortedLinkedList;
 import com.bank.model.Transaction;
 import com.bank.model.TransactionType;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -332,12 +331,12 @@ public class BenchmarkService {
                 res.rq2LinearSearchTimeNs, (double) res.rq2LinearSearchTimeNs / queryCount / 1000.0);
         System.out.printf("  - Binary Search by ID (O(N)):       %,15d ns (avg %,.2f us/lookup)\n", 
                 res.rq2BinarySearchTimeNs, (double) res.rq2BinarySearchTimeNs / queryCount / 1000.0);
-        System.out.printf("Linear Search vs. Binary Search Ratio: %.2fx (Linear is typically faster)\n",
-                (double) res.rq2BinarySearchTimeNs / Math.max(1, res.rq2LinearSearchTimeNs));
-        System.out.println("Proof: Binary Search on a sequential-access Linked List requires linear pointer");
-        System.out.println("       traversals to find middle nodes, defeating the O(log N) divide-and-conquer");
-        System.out.println("       advantage. Maintaining order on insertion costs O(N^2) in total,");
-        System.out.println("       which completely negates any benefit for sequential data structures.");
+        System.out.printf("Binary Search is faster than Linear Search by: %.2fx\n",
+                (double) res.rq2LinearSearchTimeNs / Math.max(1, res.rq2BinarySearchTimeNs));
+        System.out.println("Proof: Binary Search on a sequential-access Linked List still requires linear pointer");
+        System.out.println("       traversal to locate the middle node at each step, so the overall algorithm");
+        System.out.println("       remains O(N), not O(log N). The measurement shows Binary Search is faster");
+        System.out.println("       in this implementation, but both searches degrade to linear-time complexity.");
 
         System.out.println("----------------------------------------------------");
         System.out.printf("RESEARCH QUESTION 3 (RQ3):\n");
